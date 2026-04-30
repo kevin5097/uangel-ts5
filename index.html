@@ -6,7 +6,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>UANGEL TS 5팀 일정 협업 대시보드</title>
+<title>UANGEL TS5팀 일정 협업 대시보드</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
@@ -397,6 +397,76 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f0
 .gcal-mini-btn{font-size:10px;background:#eff6ff;color:#2563eb;padding:2px 6px;border-radius:6px;font-weight:600;white-space:nowrap;cursor:pointer}
 .gcal-mini-btn:hover{background:#dbeafe}
 
+/* ===== 프로젝트 탭 ===== */
+.proj-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:24px;gap:12px;flex-wrap:wrap}
+.proj-title-area h2{font-size:22px;font-weight:700}
+.proj-title-area p{font-size:13px;color:#64748b;margin-top:3px}
+.proj-overall{background:#fff;border-radius:14px;padding:16px 20px;box-shadow:0 2px 8px rgba(0,0,0,.06);margin-bottom:20px}
+.proj-overall-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.proj-overall-label{font-size:13px;font-weight:700;color:#1e293b}
+.proj-overall-pct{font-size:20px;font-weight:800;color:#2563eb}
+.proj-overall-bar{height:10px;background:#f1f5f9;border-radius:5px;overflow:hidden}
+.proj-overall-fill{height:100%;border-radius:5px;background:linear-gradient(90deg,#2563eb,#7c3aed);transition:.6s}
+.proj-phases{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:24px}
+@media(max-width:700px){.proj-phases{grid-template-columns:1fr 1fr}}
+@media(max-width:420px){.proj-phases{grid-template-columns:1fr}}
+.phase-card{background:#fff;border-radius:14px;padding:16px;box-shadow:0 2px 8px rgba(0,0,0,.06);cursor:pointer;transition:.15s;border:2px solid transparent;position:relative}
+.phase-card:hover{border-color:#e2e8f0;transform:translateY(-1px)}
+.phase-card.active-phase{border-color:#2563eb;background:#f8faff}
+.phase-card.done-phase{border-color:#10b981;background:#f0fdf4}
+.phase-card.blocked-phase{border-color:#ef4444;background:#fff5f5}
+.phase-status-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.phase-name{font-size:13px;font-weight:700;color:#1e293b;margin:8px 0 4px}
+.phase-bar{height:6px;background:#f1f5f9;border-radius:3px;overflow:hidden;margin-bottom:6px}
+.phase-bar-fill{height:100%;border-radius:3px;transition:.5s}
+.phase-pct{font-size:11px;color:#64748b;font-weight:600}
+.phase-badge{font-size:10px;font-weight:700;padding:2px 7px;border-radius:8px;position:absolute;top:10px;right:10px}
+.badge-waiting{background:#f1f5f9;color:#94a3b8}
+.badge-active{background:#dbeafe;color:#2563eb}
+.badge-done{background:#dcfce7;color:#15803d}
+.badge-blocked{background:#fee2e2;color:#dc2626}
+
+/* 세부 태스크 패널 */
+.proj-detail-panel{background:#fff;border-radius:16px;padding:20px;box-shadow:0 2px 8px rgba(0,0,0,.06);margin-bottom:20px;border-left:4px solid #2563eb}
+.proj-detail-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;gap:10px;flex-wrap:wrap}
+.proj-detail-title{font-size:16px;font-weight:700;color:#1e293b}
+.proj-task-row{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;background:#f8fafc;margin-bottom:6px;transition:.15s}
+.proj-task-row:hover{background:#f1f5f9}
+.proj-task-status{width:20px;height:20px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0;cursor:pointer}
+.pts-todo{background:#f1f5f9;color:#94a3b8}
+.pts-doing{background:#dbeafe;color:#2563eb}
+.pts-done{background:#dcfce7;color:#15803d}
+.pts-blocked{background:#fee2e2;color:#dc2626}
+.proj-task-title{flex:1;font-size:13px;font-weight:600;color:#1e293b}
+.proj-task-title.done-title{text-decoration:line-through;color:#94a3b8}
+.proj-task-member{font-size:11px;color:#64748b;white-space:nowrap}
+.proj-task-note{font-size:11px;color:#94a3b8;margin-top:2px;font-style:italic}
+.proj-add-task-btn{width:100%;padding:8px;border:2px dashed #e2e8f0;border-radius:8px;background:transparent;font-size:12px;color:#94a3b8;cursor:pointer;margin-top:4px;transition:.2s}
+.proj-add-task-btn:hover{border-color:#2563eb;color:#2563eb}
+.phase-progress-edit{display:flex;align-items:center;gap:8px;font-size:12px;color:#64748b}
+.phase-progress-edit input[type=range]{width:100px;accent-color:#2563eb}
+
+/* 업무 일지 */
+.proj-log-section{background:#fff;border-radius:16px;padding:20px;box-shadow:0 2px 8px rgba(0,0,0,.06)}
+.proj-log-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px}
+.proj-log-types{display:flex;gap:6px;flex-wrap:wrap}
+.log-type-btn{padding:4px 11px;border-radius:10px;border:1.5px solid #e2e8f0;background:#fff;font-size:12px;font-weight:600;color:#64748b;cursor:pointer;transition:.15s}
+.log-type-btn.active{border-color:#2563eb;color:#2563eb;background:#eff6ff}
+.proj-log-item{display:flex;gap:12px;padding:12px 0;border-bottom:1px solid #f1f5f9}
+.proj-log-item:last-child{border-bottom:none}
+.proj-log-icon{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;margin-top:1px}
+.log-update{background:#eff6ff}
+.log-decision{background:#fef3c7}
+.log-issue{background:#fee2e2}
+.proj-log-body{flex:1}
+.proj-log-content{font-size:13px;color:#1e293b;line-height:1.6;white-space:pre-wrap}
+.proj-log-meta{font-size:11px;color:#94a3b8;margin-top:4px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.proj-log-type-badge{font-size:10px;font-weight:700;padding:1px 7px;border-radius:8px}
+.ltb-update{background:#dbeafe;color:#1d4ed8}
+.ltb-decision{background:#fef3c7;color:#b45309}
+.ltb-issue{background:#fee2e2;color:#dc2626}
+.proj-log-empty{text-align:center;padding:32px;color:#cbd5e1;font-size:13px}
+
 /* ===== 통합 홈 탭 ===== */
 .home-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
 .home-grid-full{grid-column:1/-1}
@@ -461,7 +531,7 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f0
 <div id="loginScreen">
   <div class="login-box">
     <div class="login-logo">🏢</div>
-    <h1>UANGEL TS 5 팀 협업 대시보드</h1>
+    <h1>UANGEL TS5팀 협업 대시보드</h1>
     <p>비밀번호를 입력해 주세요</p>
     <input class="login-input" type="password" id="pwInput" placeholder="••••••••••">
     <button class="login-btn" id="loginBtn" onclick="doLogin()">입장하기</button>
@@ -481,7 +551,7 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f0
 <!-- APP -->
 <div id="app" style="display:none;flex-direction:column;min-height:100vh">
   <div class="topbar">
-    <span class="topbar-logo">🏢 팀 대시보드</span>
+    <span class="topbar-logo">UANGEL TS5 팀 대시보드</span>
     <div class="topbar-right">
       <div title="실시간 연결됨" class="realtime-dot"></div>
       <div class="current-user">
@@ -498,6 +568,7 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f0
     <button class="tab-btn" onclick="showTab('trip',this)">📍 출장 현황</button>
     <button class="tab-btn" onclick="showTab('notice',this)">📢 공지사항 <span id="noticeBadge" style="display:none;background:#ef4444;color:#fff;font-size:10px;padding:1px 5px;border-radius:8px;margin-left:4px"></span></button>
     <button class="tab-btn" id="dashTab" onclick="showTab('dashboard',this)" style="display:none">📊 팀장 대시보드</button>
+    <button class="tab-btn" onclick="showTab('project',this)">🤖 AI 프로젝트</button>
   </div>
   <div class="content">
 
@@ -523,6 +594,65 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f0
           <div class="home-card-title">🔄 진행중 업무</div>
           <div id="homeDoingTasks"></div>
         </div>
+      </div>
+    </div>
+
+    <!-- AI 프로젝트 탭 -->
+    <div id="tabProject" style="display:none">
+      <div class="proj-header">
+        <div class="proj-title-area">
+          <h2>🤖 AI 민원처리 분석툴</h2>
+          <p id="projSubtitle">프로젝트 진행 현황</p>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn" style="background:#f1f5f9;color:#475569;font-size:13px" onclick="openProjLogModal()">✏️ 일지 작성</button>
+          <button class="btn btn-primary" style="font-size:13px" onclick="openAddProjTask()">+ 태스크 추가</button>
+        </div>
+      </div>
+      <!-- 전체 진행률 -->
+      <div class="proj-overall">
+        <div class="proj-overall-top">
+          <span class="proj-overall-label">전체 진행률</span>
+          <span class="proj-overall-pct" id="projOverallPct">0%</span>
+        </div>
+        <div class="proj-overall-bar"><div class="proj-overall-fill" id="projOverallFill" style="width:0%"></div></div>
+      </div>
+      <!-- 단계별 카드 -->
+      <div class="proj-phases" id="projPhases"></div>
+      <!-- 선택된 단계 세부 패널 -->
+      <div class="proj-detail-panel" id="projDetailPanel" style="display:none">
+        <div class="proj-detail-header">
+          <div>
+            <div class="proj-detail-title" id="projDetailTitle"></div>
+            <div class="phase-progress-edit" style="margin-top:6px">
+              진행률 <input type="range" id="phaseProgressSlider" min="0" max="100" step="5" oninput="updatePhaseProgress(this.value)">
+              <span id="phaseProgressVal">0%</span>
+            </div>
+          </div>
+          <div style="display:flex;gap:6px;align-items:center">
+            <select id="phaseStatusSelect" class="form-select" style="padding:5px 10px;font-size:12px;width:auto" onchange="updatePhaseStatus(this.value)">
+              <option value="waiting">⏳ 대기</option>
+              <option value="active">🔄 진행중</option>
+              <option value="done">✅ 완료</option>
+              <option value="blocked">🚫 블로킹</option>
+            </select>
+          </div>
+        </div>
+        <div id="projTaskList"></div>
+        <button class="proj-add-task-btn" onclick="openAddProjTask()">+ 태스크 추가</button>
+      </div>
+      <!-- 업무 일지 -->
+      <div class="proj-log-section">
+        <div class="proj-log-header">
+          <div class="home-card-title" style="margin:0">📝 업무 일지 &amp; 의사결정 로그</div>
+          <div class="proj-log-types">
+            <button class="log-type-btn active" id="logFilter-all" onclick="filterLogs('all',this)">전체</button>
+            <button class="log-type-btn" id="logFilter-update" onclick="filterLogs('update',this)">📋 업데이트</button>
+            <button class="log-type-btn" id="logFilter-decision" onclick="filterLogs('decision',this)">💡 의사결정</button>
+            <button class="log-type-btn" id="logFilter-issue" onclick="filterLogs('issue',this)">🚨 이슈</button>
+          </div>
+        </div>
+        <div id="projLogList"></div>
       </div>
     </div>
 
@@ -794,6 +924,57 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f0
       <button class="btn btn-ghost" onclick="closeModal('noticeModal')">취소</button>
       <button class="btn btn-danger" id="ntDeleteBtn" onclick="deleteNotice()" style="display:none">삭제</button>
       <button class="btn btn-primary" id="ntSaveBtn" onclick="saveNotice()">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- PROJ TASK MODAL -->
+<div class="modal-overlay" id="projTaskModal">
+  <div class="modal" style="width:440px">
+    <h3 id="projTaskModalTitle">태스크 추가</h3>
+    <div class="form-group"><label class="form-label">태스크 제목</label><input class="form-input" id="ptTitle" placeholder="작업 내용"></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">단계</label>
+        <select class="form-select" id="ptPhase"></select>
+      </div>
+      <div class="form-group"><label class="form-label">담당자</label>
+        <select class="form-select" id="ptMember"></select>
+      </div>
+    </div>
+    <div class="form-group"><label class="form-label">상태</label>
+      <select class="form-select" id="ptStatus">
+        <option value="todo">⏳ 대기</option>
+        <option value="doing">🔄 진행중</option>
+        <option value="done">✅ 완료</option>
+        <option value="blocked">🚫 블로킹</option>
+      </select>
+    </div>
+    <div class="form-group"><label class="form-label">메모</label><textarea class="form-textarea" id="ptNote" placeholder="세부 내용, 참고사항 등"></textarea></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('projTaskModal')">취소</button>
+      <button class="btn btn-danger" id="ptDeleteBtn" onclick="deleteProjTask()" style="display:none">삭제</button>
+      <button class="btn btn-primary" id="ptSaveBtn" onclick="saveProjTask()">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- PROJ LOG MODAL -->
+<div class="modal-overlay" id="projLogModal">
+  <div class="modal" style="width:480px">
+    <h3>업무 일지 작성</h3>
+    <div class="form-group">
+      <label class="form-label">유형</label>
+      <div style="display:flex;gap:8px">
+        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;padding:8px 14px;border:2px solid #e2e8f0;border-radius:8px;flex:1;font-size:13px;font-weight:600;transition:.2s" id="ltype-update" onclick="selectLogType('update')">📋 업데이트</label>
+        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;padding:8px 14px;border:2px solid #e2e8f0;border-radius:8px;flex:1;font-size:13px;font-weight:600;transition:.2s" id="ltype-decision" onclick="selectLogType('decision')">💡 의사결정</label>
+        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;padding:8px 14px;border:2px solid #e2e8f0;border-radius:8px;flex:1;font-size:13px;font-weight:600;transition:.2s" id="ltype-issue" onclick="selectLogType('issue')">🚨 이슈</label>
+      </div>
+    </div>
+    <div class="form-group"><label class="form-label">내용</label><textarea class="form-textarea" id="plContent" style="min-height:120px" placeholder="진행 상황, 결정 사항, 이슈 등을 자유롭게 기록하세요"></textarea></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('projLogModal')">취소</button>
+      <button class="btn btn-danger" id="plDeleteBtn" onclick="deleteProjLog()" style="display:none">삭제</button>
+      <button class="btn btn-primary" id="plSaveBtn" onclick="saveProjLog()">저장</button>
     </div>
   </div>
 </div>
@@ -1089,13 +1270,22 @@ function setupRealtime() {
       if (activeTab==='home') renderHome();
       if (activeTab==='trip') renderTrip();
     })
+    .on('postgres_changes', { event:'*', schema:'public', table:'proj_phases' }, () => {
+      if (activeTab==='project') renderProject();
+    })
+    .on('postgres_changes', { event:'*', schema:'public', table:'proj_tasks' }, () => {
+      if (activeTab==='project') renderProject();
+    })
+    .on('postgres_changes', { event:'*', schema:'public', table:'proj_logs' }, () => {
+      if (activeTab==='project') getProjLogs().then(renderProjLogs);
+    })
     .subscribe();
 }
 
 // ===== TABS =====
 function showTab(name, btn) {
   activeTab = name;
-  ['home','calendar','todo','trip','notice','dashboard'].forEach(t => {
+  ['home','project','calendar','todo','trip','notice','dashboard'].forEach(t => {
     const el = document.getElementById('tab'+t.charAt(0).toUpperCase()+t.slice(1));
     if (el) el.style.display = t===name?'block':'none';
   });
@@ -1106,7 +1296,8 @@ function showTab(name, btn) {
 function runTab(name) {
   const renders = {
     home: renderHome, calendar: renderCalendar, todo: renderTodo,
-    trip: renderTrip, notice: renderNotices, dashboard: renderDashboard
+    trip: renderTrip, notice: renderNotices, dashboard: renderDashboard,
+    project: renderProject
   };
   if (renders[name]) {
     Promise.resolve(renders[name]()).catch(e => {
@@ -1710,6 +1901,321 @@ async function exportICS() {
     URL.revokeObjectURL(url);
   } catch(e) { alert('내보내기 실패: ' + e.message); }
   hideLoading();
+}
+
+// ===== PROJECT TAB =====
+const PROJ_PHASES_DEFAULT = [
+  { id:'ph1', name:'기획 / 요구사항', phase_order:1, status:'waiting', progress:0, description:'' },
+  { id:'ph2', name:'데이터 수집 · 전처리', phase_order:2, status:'waiting', progress:0, description:'' },
+  { id:'ph3', name:'AI 모델 개발', phase_order:3, status:'waiting', progress:0, description:'' },
+  { id:'ph4', name:'화면(UI) 개발', phase_order:4, status:'waiting', progress:0, description:'' },
+  { id:'ph5', name:'테스트 · 검증', phase_order:5, status:'waiting', progress:0, description:'' },
+  { id:'ph6', name:'배포 · 운영', phase_order:6, status:'waiting', progress:0, description:'' },
+];
+let selectedPhaseId = null;
+let editingProjTaskId = null;
+let editingProjLogId = null;
+let currentLogType = 'update';
+let logFilter = 'all';
+
+// DB CRUD
+async function getProjPhases() {
+  const { data, error } = await sb.from('proj_phases').select('*').order('phase_order');
+  if (error) { console.error(error); return []; }
+  if (!data || data.length === 0) {
+    // 최초 진입 시 기본 단계 삽입
+    await sb.from('proj_phases').insert(PROJ_PHASES_DEFAULT);
+    return PROJ_PHASES_DEFAULT;
+  }
+  return data;
+}
+async function upsertProjPhase(ph) {
+  const { error } = await sb.from('proj_phases').upsert(ph);
+  if (error) throw error;
+}
+async function getProjTasks(phaseId) {
+  let q = sb.from('proj_tasks').select('*').order('created_at');
+  if (phaseId) q = q.eq('phase_id', phaseId);
+  const { data, error } = await q;
+  if (error) { console.error(error); return []; }
+  return data || [];
+}
+async function upsertProjTask(t) {
+  const { error } = await sb.from('proj_tasks').upsert(t);
+  if (error) throw error;
+}
+async function deleteProjTaskById(id) {
+  const { error } = await sb.from('proj_tasks').delete().eq('id', id);
+  if (error) throw error;
+}
+async function getProjLogs() {
+  const { data, error } = await sb.from('proj_logs').select('*').order('created_at', { ascending: false });
+  if (error) { console.error(error); return []; }
+  return data || [];
+}
+async function upsertProjLog(l) {
+  const { error } = await sb.from('proj_logs').upsert(l);
+  if (error) throw error;
+}
+async function deleteProjLogById(id) {
+  const { error } = await sb.from('proj_logs').delete().eq('id', id);
+  if (error) throw error;
+}
+
+// 렌더
+async function renderProject() {
+  const [phases, logs] = await Promise.all([getProjPhases(), getProjLogs()]);
+  renderPhaseCards(phases);
+  renderProjLogs(logs);
+  if (selectedPhaseId) {
+    const ph = phases.find(p => p.id === selectedPhaseId);
+    if (ph) await renderProjDetail(ph);
+  }
+}
+
+function phaseStatusColor(s) {
+  return { waiting:'#94a3b8', active:'#2563eb', done:'#10b981', blocked:'#ef4444' }[s] || '#94a3b8';
+}
+function phaseBarColor(s) {
+  return { waiting:'#cbd5e1', active:'#2563eb', done:'#10b981', blocked:'#ef4444' }[s] || '#cbd5e1';
+}
+function phaseBadge(s) {
+  const map = { waiting:['대기','badge-waiting'], active:['진행중','badge-active'], done:['완료','badge-done'], blocked:['블로킹','badge-blocked'] };
+  return map[s] || map.waiting;
+}
+
+function renderPhaseCards(phases) {
+  const total = phases.reduce((s,p) => s + (p.progress||0), 0);
+  const overall = phases.length ? Math.round(total / phases.length) : 0;
+  document.getElementById('projOverallPct').textContent = overall + '%';
+  document.getElementById('projOverallFill').style.width = overall + '%';
+
+  const activePhase = phases.find(p=>p.status==='active');
+  const cnt = phases.filter(p=>p.status==='done').length;
+  document.getElementById('projSubtitle').textContent =
+    activePhase ? `현재 단계: ${activePhase.name} · 완료 ${cnt}/${phases.length} 단계` : `완료 ${cnt}/${phases.length} 단계`;
+
+  const container = document.getElementById('projPhases');
+  container.innerHTML = '';
+  phases.forEach(ph => {
+    const [badgeTxt, badgeCls] = phaseBadge(ph.status);
+    const card = document.createElement('div');
+    card.className = 'phase-card' +
+      (ph.status==='active' ? ' active-phase' : ph.status==='done' ? ' done-phase' : ph.status==='blocked' ? ' blocked-phase' : '') +
+      (selectedPhaseId===ph.id ? ' active-phase' : '');
+    card.innerHTML = `
+      <span class="phase-badge ${badgeCls}">${badgeTxt}</span>
+      <div style="font-size:18px;margin-bottom:4px">${['','📋','🗂️','🤖','🖥️','🧪','🚀'][ph.phase_order]||'📌'}</div>
+      <div class="phase-name">${ph.name}</div>
+      <div class="phase-bar"><div class="phase-bar-fill" style="width:${ph.progress||0}%;background:${phaseBarColor(ph.status)}"></div></div>
+      <div class="phase-pct">${ph.progress||0}%</div>`;
+    card.onclick = () => selectPhase(ph);
+    container.appendChild(card);
+  });
+}
+
+async function selectPhase(ph) {
+  selectedPhaseId = ph.id;
+  await renderProject();
+}
+
+async function renderProjDetail(ph) {
+  const panel = document.getElementById('projDetailPanel');
+  panel.style.display = 'block';
+  panel.style.borderLeftColor = phaseStatusColor(ph.status);
+  document.getElementById('projDetailTitle').textContent = ph.name;
+  document.getElementById('phaseProgressSlider').value = ph.progress || 0;
+  document.getElementById('phaseProgressVal').textContent = (ph.progress||0) + '%';
+  document.getElementById('phaseStatusSelect').value = ph.status || 'waiting';
+
+  const tasks = await getProjTasks(ph.id);
+  const list = document.getElementById('projTaskList');
+  list.innerHTML = '';
+  if (!tasks.length) {
+    list.innerHTML = '<div style="text-align:center;padding:16px;color:#cbd5e1;font-size:13px">태스크를 추가해 보세요</div>';
+  } else {
+    const statusIcon = { todo:'⏳', doing:'🔄', done:'✓', blocked:'🚫' };
+    const statusCls = { todo:'pts-todo', doing:'pts-doing', done:'pts-done', blocked:'pts-blocked' };
+    tasks.forEach(t => {
+      const m = MEMBERS.find(x=>x.name===t.member);
+      const row = document.createElement('div');
+      row.className = 'proj-task-row';
+      row.innerHTML = `
+        <div class="proj-task-status ${statusCls[t.status]||'pts-todo'}" onclick="cycleTaskStatus('${t.id}',event)">${statusIcon[t.status]||'⏳'}</div>
+        <div style="flex:1">
+          <div class="proj-task-title${t.status==='done'?' done-title':''}">${t.title}</div>
+          ${t.note ? `<div class="proj-task-note">${t.note}</div>` : ''}
+        </div>
+        <div class="proj-task-member">${m?m.emoji+' '+m.name:t.member||''}</div>
+        <div style="font-size:12px;color:#cbd5e1;cursor:pointer;padding:4px" onclick="openEditProjTask(event,'${t.id}')">✏️</div>`;
+      list.appendChild(row);
+    });
+  }
+  panel.scrollIntoView({ behavior:'smooth', block:'nearest' });
+}
+
+async function updatePhaseProgress(val) {
+  document.getElementById('phaseProgressVal').textContent = val + '%';
+  if (!selectedPhaseId) return;
+  const { data } = await sb.from('proj_phases').select('*').eq('id', selectedPhaseId).single();
+  if (data) { data.progress = parseInt(val); await upsertProjPhase(data); renderProject(); }
+}
+async function updatePhaseStatus(val) {
+  if (!selectedPhaseId) return;
+  const { data } = await sb.from('proj_phases').select('*').eq('id', selectedPhaseId).single();
+  if (data) { data.status = val; await upsertProjPhase(data); renderProject(); }
+}
+
+// 태스크 상태 순환 클릭
+const STATUS_CYCLE = ['todo','doing','done','blocked'];
+async function cycleTaskStatus(taskId, e) {
+  e.stopPropagation();
+  const { data } = await sb.from('proj_tasks').select('*').eq('id', taskId).single();
+  if (!data) return;
+  const idx = STATUS_CYCLE.indexOf(data.status);
+  data.status = STATUS_CYCLE[(idx+1) % STATUS_CYCLE.length];
+  await upsertProjTask(data);
+  const ph = (await getProjPhases()).find(p=>p.id===selectedPhaseId);
+  if (ph) renderProjDetail(ph);
+  renderProject();
+}
+
+// 태스크 모달
+async function openAddProjTask() {
+  editingProjTaskId = null;
+  document.getElementById('projTaskModalTitle').textContent = '태스크 추가';
+  document.getElementById('ptTitle').value = '';
+  document.getElementById('ptNote').value = '';
+  document.getElementById('ptStatus').value = 'todo';
+  document.getElementById('ptDeleteBtn').style.display = 'none';
+  populateMembers('ptMember', currentUser?.name||'');
+  // 단계 select
+  const phases = await getProjPhases();
+  document.getElementById('ptPhase').innerHTML = phases.map(p =>
+    `<option value="${p.id}" ${p.id===selectedPhaseId?'selected':''}>${p.name}</option>`).join('');
+  openModal('projTaskModal');
+}
+async function openEditProjTask(e, taskId) {
+  e.stopPropagation();
+  const { data } = await sb.from('proj_tasks').select('*').eq('id', taskId).single();
+  if (!data) return;
+  editingProjTaskId = taskId;
+  document.getElementById('projTaskModalTitle').textContent = '태스크 수정';
+  document.getElementById('ptTitle').value = data.title;
+  document.getElementById('ptNote').value = data.note || '';
+  document.getElementById('ptStatus').value = data.status;
+  document.getElementById('ptDeleteBtn').style.display = 'inline-block';
+  populateMembers('ptMember', data.member);
+  const phases = await getProjPhases();
+  document.getElementById('ptPhase').innerHTML = phases.map(p =>
+    `<option value="${p.id}" ${p.id===data.phase_id?'selected':''}>${p.name}</option>`).join('');
+  openModal('projTaskModal');
+}
+async function saveProjTask() {
+  const title = document.getElementById('ptTitle').value.trim();
+  if (!title) { alert('제목을 입력해 주세요'); return; }
+  const btn = document.getElementById('ptSaveBtn');
+  btn.disabled = true;
+  try {
+    await upsertProjTask({
+      id: editingProjTaskId || uid(),
+      phase_id: document.getElementById('ptPhase').value,
+      title,
+      member: document.getElementById('ptMember').value,
+      status: document.getElementById('ptStatus').value,
+      note: document.getElementById('ptNote').value.trim(),
+    });
+    closeModal('projTaskModal');
+    selectedPhaseId = document.getElementById('ptPhase').value;
+    await renderProject();
+  } catch(e) { alert('저장 실패: ' + e.message); }
+  btn.disabled = false;
+}
+async function deleteProjTask() {
+  if (!confirm('태스크를 삭제할까요?')) return;
+  await deleteProjTaskById(editingProjTaskId);
+  closeModal('projTaskModal');
+  await renderProject();
+}
+
+// 일지 모달
+function selectLogType(type) {
+  currentLogType = type;
+  ['update','decision','issue'].forEach(t => {
+    const el = document.getElementById('ltype-'+t);
+    if (!el) return;
+    const colors = { update:'#2563eb', decision:'#d97706', issue:'#dc2626' };
+    el.style.borderColor = t===type ? colors[t] : '#e2e8f0';
+    el.style.background = t===type ? (t==='update'?'#eff6ff':t==='decision'?'#fef3c7':'#fee2e2') : '#fff';
+  });
+}
+function openProjLogModal(log) {
+  editingProjLogId = log ? log.id : null;
+  document.getElementById('plContent').value = log ? log.content : '';
+  document.getElementById('plDeleteBtn').style.display = log ? 'inline-block' : 'none';
+  selectLogType(log ? log.log_type : 'update');
+  openModal('projLogModal');
+}
+async function saveProjLog() {
+  const content = document.getElementById('plContent').value.trim();
+  if (!content) { alert('내용을 입력해 주세요'); return; }
+  const btn = document.getElementById('plSaveBtn');
+  btn.disabled = true;
+  try {
+    await upsertProjLog({
+      id: editingProjLogId || uid(),
+      author: currentUser?.name || '',
+      content,
+      log_type: currentLogType,
+    });
+    closeModal('projLogModal');
+    const logs = await getProjLogs();
+    renderProjLogs(logs);
+  } catch(e) { alert('저장 실패: ' + e.message); }
+  btn.disabled = false;
+}
+async function deleteProjLog() {
+  if (!confirm('일지를 삭제할까요?')) return;
+  await deleteProjLogById(editingProjLogId);
+  closeModal('projLogModal');
+  const logs = await getProjLogs();
+  renderProjLogs(logs);
+}
+
+function filterLogs(type, btn) {
+  logFilter = type;
+  document.querySelectorAll('.log-type-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  getProjLogs().then(logs => renderProjLogs(logs));
+}
+
+function renderProjLogs(logs) {
+  const filtered = logFilter === 'all' ? logs : logs.filter(l=>l.log_type===logFilter);
+  const container = document.getElementById('projLogList');
+  if (!filtered.length) {
+    container.innerHTML = '<div class="proj-log-empty">📭 아직 작성된 일지가 없습니다<br><span style="font-size:12px">업무 일지를 작성해 팀과 공유하세요</span></div>';
+    return;
+  }
+  const logIcon = { update:'📋', decision:'💡', issue:'🚨' };
+  const logIconBg = { update:'log-update', decision:'log-decision', issue:'log-issue' };
+  const logBadge = { update:'ltb-update', decision:'ltb-decision', issue:'ltb-issue' };
+  const logBadgeTxt = { update:'업데이트', decision:'의사결정', issue:'이슈' };
+  container.innerHTML = filtered.map(l => {
+    const m = MEMBERS.find(x=>x.name===l.author);
+    const dateStr = new Date(l.created_at).toLocaleString('ko-KR',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'});
+    return `<div class="proj-log-item">
+      <div class="proj-log-icon ${logIconBg[l.log_type]||'log-update'}">${logIcon[l.log_type]||'📋'}</div>
+      <div class="proj-log-body">
+        <div class="proj-log-content">${l.content}</div>
+        <div class="proj-log-meta">
+          <span>${m?m.emoji+' ':''}<b>${l.author}</b></span>
+          <span>·</span><span>${dateStr}</span>
+          <span class="proj-log-type-badge ${logBadge[l.log_type]||'ltb-update'}">${logBadgeTxt[l.log_type]||'업데이트'}</span>
+          <span style="margin-left:auto;cursor:pointer;color:#cbd5e1;font-size:12px" onclick='openProjLogModal(${JSON.stringify(l).replace(/'/g,"&#39;")})'>✏️</span>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
 }
 
 // ===== WEEKLY REPORT =====
@@ -2331,7 +2837,7 @@ async function deleteNotice() {
 function showTabMobile(name, bnavBtn) {
   // 탭 콘텐츠 전환 (기존 showTab 로직 재사용)
   activeTab = name;
-  ['home','calendar','todo','trip','notice','dashboard'].forEach(t => {
+  ['home','project','calendar','todo','trip','notice','dashboard'].forEach(t => {
     const el = document.getElementById('tab'+t.charAt(0).toUpperCase()+t.slice(1));
     if (el) el.style.display = t===name?'block':'none';
   });
