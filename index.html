@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>UANGEL TS5팀 일정 협업 대시보드</title>
+<title>팀 일정 협업 대시보드</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
@@ -399,6 +399,23 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f0
 ::-webkit-scrollbar{width:6px;height:6px}
 ::-webkit-scrollbar-track{background:#f1f5f9}
 ::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:3px}
+
+/* ===== GUEST MODE ===== */
+body.guest-mode .add-task-btn,
+body.guest-mode .add-site-btn,
+body.guest-mode .del-site-btn,
+body.guest-mode .week-add-btn,
+body.guest-mode .proj-add-task-btn,
+body.guest-mode #addNoticeBtn,
+body.guest-mode #todoAddBtn,
+body.guest-mode #tripAddBtn,
+body.guest-mode #projAddBtn,
+body.guest-mode #projLogBtn { display: none !important; }
+/* 게스트 배너로 인한 콘텐츠 여백 */
+body.guest-mode .content { padding-top: 14px; }
+@media(max-width:640px){
+  body.guest-mode #guestBanner { top: 50px; }
+}
 .gcal-mini-btn{font-size:10px;background:#eff6ff;color:#2563eb;padding:2px 6px;border-radius:6px;font-weight:600;white-space:nowrap;cursor:pointer}
 .gcal-mini-btn:hover{background:#dbeafe}
 
@@ -536,11 +553,14 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f0
 <div id="loginScreen">
   <div class="login-box">
     <div class="login-logo">🏢</div>
-    <h1>UANGEL TS5팀 협업 대시보드</h1>
+    <h1>팀 협업 대시보드</h1>
     <p>비밀번호를 입력해 주세요</p>
     <input class="login-input" type="password" id="pwInput" placeholder="••••••••••">
     <button class="login-btn" id="loginBtn" onclick="doLogin()">입장하기</button>
     <div class="login-error" id="loginError"></div>
+    <div style="margin-top:20px;padding-top:16px;border-top:1px solid #f1f5f9">
+      <button onclick="doGuestLogin()" style="width:100%;padding:10px;background:transparent;border:1.5px solid #e2e8f0;border-radius:10px;font-size:13px;color:#94a3b8;cursor:pointer;transition:.2s" onmouseover="this.style.borderColor='#94a3b8';this.style.color='#64748b'" onmouseout="this.style.borderColor='#e2e8f0';this.style.color='#94a3b8'">👁 게스트로 열람하기</button>
+    </div>
   </div>
 </div>
 
@@ -556,7 +576,7 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f0
 <!-- APP -->
 <div id="app" style="display:none;flex-direction:column;min-height:100vh">
   <div class="topbar">
-    <span class="topbar-logo">UANGEL TS5팀 대시보드</span>
+    <span class="topbar-logo">🏢 팀 대시보드</span>
     <div class="topbar-right">
       <div title="실시간 연결됨" class="realtime-dot"></div>
       <div class="current-user">
@@ -610,8 +630,8 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f0
           <p id="projSubtitle">프로젝트 진행 현황</p>
         </div>
         <div style="display:flex;gap:8px;flex-wrap:wrap">
-          <button class="btn" style="background:#f1f5f9;color:#475569;font-size:13px" onclick="openProjLogModal()">✏️ 일지 작성</button>
-          <button class="btn btn-primary" style="font-size:13px" onclick="openAddProjTask()">+ 태스크 추가</button>
+          <button id="projLogBtn" class="btn" style="background:#f1f5f9;color:#475569;font-size:13px" onclick="openProjLogModal()">✏️ 일지 작성</button>
+          <button id="projAddBtn" class="btn btn-primary" style="font-size:13px" onclick="openAddProjTask()">+ 태스크 추가</button>
         </div>
       </div>
       <!-- 전체 진행률 -->
@@ -704,7 +724,7 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f0
     <div id="tabTodo" style="display:none">
       <div class="todo-header">
         <h2>✅ 사이트별 TO-DO</h2>
-        <button class="btn btn-primary" onclick="openAddTask()">+ 업무 추가</button>
+        <button id="todoAddBtn" class="btn btn-primary" onclick="openAddTask()">+ 업무 추가</button>
       </div>
       <div class="site-tabs" id="siteTabs"></div>
       <div class="todo-filter" id="todoFilter"></div>
@@ -715,7 +735,7 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f0
     <div id="tabTrip" style="display:none">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
         <h2 style="font-size:22px;font-weight:700">📍 출장 현황</h2>
-        <button class="btn btn-primary" onclick="openAddTrip()">+ 출장 등록</button>
+        <button id="tripAddBtn" class="btn btn-primary" onclick="openAddTrip()">+ 출장 등록</button>
       </div>
       <div style="font-size:13px;color:#64748b;margin-bottom:16px" id="tripTodayLabel"></div>
       <div class="trip-today-grid" id="tripTodayGrid"></div>
@@ -1025,6 +1045,11 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f0
   </div>
 </div>
 
+<!-- GUEST BANNER -->
+<div id="guestBanner" style="display:none;position:fixed;top:56px;left:0;right:0;background:#fef9c3;border-bottom:1px solid #fde047;padding:8px 16px;align-items:center;justify-content:center;z-index:300;font-size:13px;color:#854d0e;gap:6px">
+  <span>👁 열람 전용 모드입니다 — 데이터를 수정할 수 없습니다</span>
+</div>
+
 <!-- LOADING -->
 <div class="loading-overlay" id="loadingOverlay" style="display:none">
   <div style="text-align:center">
@@ -1043,6 +1068,7 @@ const sb = createClient(
 
 // ===== CONFIG =====
 const PASSWORD = 'uangel.1004';
+const GUEST_MEMBER = { name:'Guest', role:'guest', color:'#94a3b8', emoji:'👁' };
 const LOCATIONS = [
   { name:'본사',         icon:'🏢', color:'#64748b', bg:'#f1f5f9' },
   { name:'SKB - 동작',  icon:'📡', color:'#2563eb', bg:'#2563eb' },
@@ -1182,6 +1208,8 @@ async function deleteTaskById(id) {
 }
 
 // ===== LOGIN =====
+function isGuest() { return currentUser && currentUser.role === 'guest'; }
+
 function doLogin() {
   const pw = document.getElementById('pwInput').value;
   if (pw === PASSWORD) {
@@ -1195,6 +1223,11 @@ function doLogin() {
   }
 }
 document.getElementById('pwInput').onkeydown = e => { if(e.key==='Enter') doLogin(); };
+
+function doGuestLogin() {
+  document.getElementById('loginScreen').style.display = 'none';
+  selectMember(GUEST_MEMBER);
+}
 
 function showMemberSelect() {
   const ms = document.getElementById('memberSelect');
@@ -1221,13 +1254,18 @@ async function selectMember(m) {
   currentUser = m;
   document.getElementById('memberSelect').style.display = 'none';
   document.getElementById('topUserDot').textContent = m.emoji;
-  document.getElementById('topUserName').textContent = m.name + (m.role==='팀장' ? ' (팀장)' : '');
+  document.getElementById('topUserName').textContent = m.name + (m.role==='팀장' ? ' (팀장)' : m.role==='guest' ? ' (열람 전용)' : '');
   document.getElementById('dashTab').style.display = m.role==='팀장' ? 'block' : 'none';
   document.getElementById('addNoticeBtn').style.display = m.role==='팀장' ? 'inline-block' : 'none';
+  // 게스트 읽기 전용 배너 & body 클래스
+  const guestBanner = document.getElementById('guestBanner');
+  if (guestBanner) guestBanner.style.display = m.role==='guest' ? 'flex' : 'none';
+  document.body.classList.toggle('guest-mode', m.role==='guest');
   // 바텀 네비 표시
   if (window.innerWidth <= 640) {
     document.getElementById('bottomNav').style.display = 'flex';
-    document.getElementById('bnav-dashboard').style.display = m.role==='팀장' ? 'flex' : 'none';
+    const bnavDash = document.getElementById('bnav-dashboard');
+    if (bnavDash) bnavDash.style.display = m.role==='팀장' ? 'flex' : 'none';
   }
   const app = document.getElementById('app');
   app.style.display = 'flex';
@@ -1249,6 +1287,9 @@ function logout() {
   currentUser = null;
   document.getElementById('app').style.display = 'none';
   document.getElementById('bottomNav').style.display = 'none';
+  const guestBanner = document.getElementById('guestBanner');
+  if (guestBanner) guestBanner.style.display = 'none';
+  document.body.classList.remove('guest-mode');
   document.getElementById('loginScreen').style.display = 'flex';
   document.getElementById('pwInput').value = '';
 }
@@ -1348,14 +1389,34 @@ async function retryLoad() {
 }
 
 // ===== HOME TAB =====
+function homeLoadingHTML() {
+  return `<div style="padding:12px;text-align:center;color:#cbd5e1;font-size:13px">
+    <div style="width:20px;height:20px;border:2px solid #e2e8f0;border-top-color:#2563eb;border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 6px"></div>불러오는 중...</div>`;
+}
+function homeErrorHTML(section) {
+  return `<div style="padding:12px;text-align:center;color:#ef4444;font-size:12px">
+    ⚠️ 데이터를 불러오지 못했습니다<br>
+    <button onclick="renderHome()" style="margin-top:8px;padding:4px 12px;border-radius:6px;border:1px solid #ef4444;background:#fff;color:#ef4444;font-size:12px;cursor:pointer">다시 시도</button>
+  </div>`;
+}
+
 async function renderHome() {
-  const today = fmt(new Date());
   const now = new Date();
   const dayNames = ['일요일','월요일','화요일','수요일','목요일','금요일','토요일'];
-  document.getElementById('homeDateLabel').textContent =
+  // ① 날짜·골격 즉시 표시
+  const dateLbl = document.getElementById('homeDateLabel');
+  if (dateLbl) dateLbl.textContent =
     `${now.getFullYear()}년 ${now.getMonth()+1}월 ${now.getDate()}일 ${dayNames[now.getDay()]}`;
 
-  // 병렬 로드
+  const tripEl   = document.getElementById('homeTripToday');
+  const weekEl   = document.getElementById('homeWeekEvents');
+  const doingEl  = document.getElementById('homeDoingTasks');
+  if (tripEl)  tripEl.innerHTML  = homeLoadingHTML();
+  if (weekEl)  weekEl.innerHTML  = homeLoadingHTML();
+  if (doingEl) doingEl.innerHTML = homeLoadingHTML();
+
+  // ② 데이터 로드
+  const today = fmt(now);
   const ws = getWeekStart(now);
   const we = addDays(ws, 6);
   let events, trips, tasks;
@@ -1367,90 +1428,92 @@ async function renderHome() {
     ]);
     hideRetryBanner();
   } catch(e) {
-    console.error('데이터 로드 오류:', e);
-    throw e; // 상위 catch로 전달
+    console.error('홈 데이터 오류:', e);
+    if (tripEl)  tripEl.innerHTML  = homeErrorHTML();
+    if (weekEl)  weekEl.innerHTML  = homeErrorHTML();
+    if (doingEl) doingEl.innerHTML = homeErrorHTML();
+    return;
   }
 
-  // ── 금일 출장 현황 ──
-  const tripToday = document.getElementById('homeTripToday');
-  tripToday.innerHTML = '';
-  MEMBERS.forEach(m => {
-    const trip = trips.find(t => t.member === m.name);
-    const loc = trip ? LOCATIONS.find(l => l.name === trip.location) : null;
-    const isAway = trip && trip.location !== '본사';
-    const row = document.createElement('div');
-    row.className = 'home-trip-row';
-    const badgeStyle = isAway
-      ? `background:${loc?.bg||'#64748b'};color:#fff`
-      : 'background:#f1f5f9;color:#64748b';
-    row.innerHTML = `
-      <div class="home-trip-avatar" style="background:${m.color}20">${m.emoji}</div>
-      <div class="home-trip-name">${m.name}</div>
-      <div class="home-trip-badge" style="${badgeStyle}">
-        ${trip ? (loc?.icon||'📍')+' '+(trip.location) : '🏢 본사'}
-      </div>
-      ${trip?.note ? `<div style="font-size:11px;color:#94a3b8;margin-left:auto">${trip.note}</div>` : ''}`;
-    tripToday.appendChild(row);
-  });
-
-  // ── 이번주 일정 ──
-  const weekEvs = events.filter(ev => ev.start <= fmt(we) && (ev.end||ev.start) >= fmt(ws));
-  weekEvs.sort((a,b)=>a.start.localeCompare(b.start));
-  const homeWeek = document.getElementById('homeWeekEvents');
-  if (!weekEvs.length) {
-    homeWeek.innerHTML = '<div class="home-empty">이번 주 일정이 없습니다</div>';
-  } else {
-    homeWeek.innerHTML = '';
-    weekEvs.slice(0,8).forEach(ev => {
-      const memberNames = (ev.member||'').split(',').map(s=>s.trim()).filter(Boolean);
-      const members = memberNames.map(n=>MEMBERS.find(m=>m.name===n)).filter(Boolean);
-      if (!members.length) members.push(MEMBERS[0]);
-      const d = new Date(ev.start+'T00:00:00');
-      const dateLabel = `${d.getMonth()+1}/${d.getDate()}(${DAY_KO[d.getDay()]})`;
-      const barColor = members.length===1 ? members[0].color
-        : `linear-gradient(180deg,${members.map((m,i)=>`${m.color} ${i*100/members.length}%,${m.color} ${(i+1)*100/members.length}%`).join(',')})`;
-      const item = document.createElement('div');
-      item.className = 'home-week-item';
-      item.style.cursor = 'pointer';
-      item.innerHTML = `
-        <div class="home-week-bar" style="background:${barColor}"></div>
-        <div>
-          <div class="home-week-title">${ev.title}</div>
-          <div class="home-week-meta">${dateLabel} · ${members.map(m=>m.emoji+m.name).join(' ')}</div>
-        </div>`;
-      item.onclick = () => openEditEvent(ev);
-      homeWeek.appendChild(item);
+  // ③ 금일 출장 현황
+  if (tripEl) {
+    tripEl.innerHTML = '';
+    MEMBERS.forEach(m => {
+      const trip = trips.find(t => t.member === m.name);
+      const loc = trip ? LOCATIONS.find(l => l.name === trip.location) : null;
+      const isAway = trip && trip.location !== '본사';
+      const row = document.createElement('div');
+      row.className = 'home-trip-row';
+      const badgeStyle = isAway
+        ? `background:${loc ? loc.bg : '#64748b'};color:#fff`
+        : 'background:#f1f5f9;color:#64748b';
+      row.innerHTML =
+        `<div class="home-trip-avatar" style="background:${m.color}20">${m.emoji}</div>
+        <div class="home-trip-name">${m.name}</div>
+        <div class="home-trip-badge" style="${badgeStyle}">${trip ? (loc ? loc.icon : '📍')+' '+trip.location : '🏢 본사'}</div>
+        ${trip && trip.note ? `<div style="font-size:11px;color:#94a3b8;margin-left:auto">${trip.note}</div>` : ''}`;
+      tripEl.appendChild(row);
     });
-    if (weekEvs.length > 8) {
-      homeWeek.innerHTML += `<div style="font-size:12px;color:#94a3b8;text-align:center;padding:6px">외 ${weekEvs.length-8}건</div>`;
+  }
+
+  // ④ 이번주 일정
+  if (weekEl) {
+    const weekEvs = events.filter(ev => ev.start <= fmt(we) && (ev.end || ev.start) >= fmt(ws));
+    weekEvs.sort((a,b) => a.start.localeCompare(b.start));
+    if (!weekEvs.length) {
+      weekEl.innerHTML = '<div class="home-empty">이번 주 일정이 없습니다</div>';
+    } else {
+      weekEl.innerHTML = '';
+      weekEvs.slice(0,8).forEach(ev => {
+        const memberNames = (ev.member||'').split(',').map(s=>s.trim()).filter(Boolean);
+        const members = memberNames.map(n=>MEMBERS.find(m=>m.name===n)).filter(Boolean);
+        if (!members.length) members.push(MEMBERS[0]);
+        const d = new Date(ev.start+'T00:00:00');
+        const dayArr = ['일','월','화','수','목','금','토'];
+        const dateLabel = `${d.getMonth()+1}/${d.getDate()}(${dayArr[d.getDay()]})`;
+        const barColor = members.length===1 ? members[0].color
+          : `linear-gradient(180deg,${members.map((m,i)=>`${m.color} ${i*100/members.length}%,${m.color} ${(i+1)*100/members.length}%`).join(',')})`;
+        const item = document.createElement('div');
+        item.className = 'home-week-item';
+        item.style.cursor = 'pointer';
+        item.innerHTML =
+          `<div class="home-week-bar" style="background:${barColor}"></div>
+          <div><div class="home-week-title">${ev.title}</div>
+          <div class="home-week-meta">${dateLabel} · ${members.map(m=>m.emoji+m.name).join(' ')}</div></div>`;
+        item.onclick = () => openEditEvent(ev);
+        weekEl.appendChild(item);
+      });
+      if (weekEvs.length > 8)
+        weekEl.innerHTML += `<div style="font-size:12px;color:#94a3b8;text-align:center;padding:6px">외 ${weekEvs.length-8}건</div>`;
     }
   }
 
-  // ── 진행중 TO-DO ──
-  const doing = tasks.filter(t => t.status === 'doing');
-  const homeDoing = document.getElementById('homeDoingTasks');
-  if (!doing.length) {
-    homeDoing.innerHTML = '<div class="home-empty">진행중인 업무가 없습니다</div>';
-  } else {
-    const grid = document.createElement('div');
-    grid.style.cssText = 'display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:8px';
-    doing.forEach(t => {
-      const m = MEMBERS.find(x=>x.name===t.member)||MEMBERS[0];
-      const overdue = t.due && t.due < fmt(new Date());
-      const card = document.createElement('div');
-      card.className = 'home-doing-card';
-      card.style.borderLeftColor = m.color;
-      card.style.cursor = 'pointer';
-      card.innerHTML = `
-        <div style="flex:1">
-          <div class="home-doing-title">${t.title}</div>
-          <div class="home-doing-meta">${m.emoji} ${m.name} · ${t.site||'-'}${t.due?` · <span style="color:${overdue?'#ef4444':'#94a3b8'}">${t.due}</span>`:''}</div>
-        </div>`;
-      card.onclick = () => openEditTask(t);
-      grid.appendChild(card);
-    });
-    homeDoing.innerHTML = '';
-    homeDoing.appendChild(grid);
+  // ⑤ 진행중 TO-DO
+  if (doingEl) {
+    const doing = tasks.filter(t => t.status === 'doing');
+    if (!doing.length) {
+      doingEl.innerHTML = '<div class="home-empty">진행중인 업무가 없습니다</div>';
+    } else {
+      doingEl.innerHTML = '';
+      const grid = document.createElement('div');
+      grid.style.cssText = 'display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px';
+      doing.forEach(t => {
+        const m = MEMBERS.find(x=>x.name===t.member)||MEMBERS[0];
+        const overdue = t.due && t.due < today;
+        const card = document.createElement('div');
+        card.className = 'home-doing-card';
+        card.style.borderLeftColor = m.color;
+        card.style.cursor = 'pointer';
+        card.innerHTML =
+          `<div style="flex:1">
+            <div class="home-doing-title">${t.title}</div>
+            <div class="home-doing-meta">${m.emoji} ${m.name} · ${t.site||'-'}${t.due ? ' · <span style="color:'+(overdue?'#ef4444':'#94a3b8')+'">'+t.due+'</span>' : ''}</div>
+          </div>`;
+        card.onclick = () => openEditTask(t);
+        grid.appendChild(card);
+      });
+      doingEl.appendChild(grid);
+    }
   }
 }
 
@@ -1772,6 +1835,7 @@ async function populateEventSite(selected) {
 }
 
 async function openAddEvent(dateStr) {
+  if (isGuest()) return;
   editingEventId = null;
   document.getElementById('eventModalTitle').textContent = '일정 추가';
   document.getElementById('evTitle').value = '';
@@ -1785,6 +1849,7 @@ async function openAddEvent(dateStr) {
   openModal('eventModal');
 }
 async function openEditEvent(ev) {
+  if (isGuest()) return;
   editingEventId = ev.id;
   document.getElementById('eventModalTitle').textContent = '일정 수정';
   document.getElementById('evTitle').value = ev.title;
@@ -2064,12 +2129,12 @@ async function renderProjDetail(ph) {
 
 async function updatePhaseProgress(val) {
   document.getElementById('phaseProgressVal').textContent = val + '%';
-  if (!selectedPhaseId) return;
+  if (!selectedPhaseId || isGuest()) return;
   const { data } = await sb.from('proj_phases').select('*').eq('id', selectedPhaseId).single();
   if (data) { data.progress = parseInt(val); await upsertProjPhase(data); renderProject(); }
 }
 async function updatePhaseStatus(val) {
-  if (!selectedPhaseId) return;
+  if (!selectedPhaseId || isGuest()) return;
   const { data } = await sb.from('proj_phases').select('*').eq('id', selectedPhaseId).single();
   if (data) { data.status = val; await upsertProjPhase(data); renderProject(); }
 }
@@ -2077,6 +2142,7 @@ async function updatePhaseStatus(val) {
 // 태스크 상태 순환 클릭
 const STATUS_CYCLE = ['todo','doing','done','blocked'];
 async function cycleTaskStatus(taskId, e) {
+  if (isGuest()) return;
   e.stopPropagation();
   const { data } = await sb.from('proj_tasks').select('*').eq('id', taskId).single();
   if (!data) return;
@@ -2090,6 +2156,7 @@ async function cycleTaskStatus(taskId, e) {
 
 // 태스크 모달
 async function openAddProjTask() {
+  if (isGuest()) return;
   editingProjTaskId = null;
   document.getElementById('projTaskModalTitle').textContent = '태스크 추가';
   document.getElementById('ptTitle').value = '';
@@ -2104,6 +2171,7 @@ async function openAddProjTask() {
   openModal('projTaskModal');
 }
 async function openEditProjTask(e, taskId) {
+  if (isGuest()) return;
   e.stopPropagation();
   const { data } = await sb.from('proj_tasks').select('*').eq('id', taskId).single();
   if (!data) return;
@@ -2158,6 +2226,7 @@ function selectLogType(type) {
   });
 }
 function openProjLogModal(log) {
+  if (isGuest()) return;
   editingProjLogId = log ? log.id : null;
   document.getElementById('plContent').value = log ? log.content : '';
   document.getElementById('plDeleteBtn').style.display = log ? 'inline-block' : 'none';
@@ -2442,6 +2511,7 @@ async function populateSites(selId, selected) {
     : `<option value="">사이트 없음 (먼저 추가하세요)</option>`;
 }
 async function openAddTask(status='todo') {
+  if (isGuest()) return;
   editingTaskId = null;
   document.getElementById('taskModalTitle').textContent = '업무 추가';
   document.getElementById('tkTitle').value = '';
@@ -2455,6 +2525,7 @@ async function openAddTask(status='todo') {
   openModal('taskModal');
 }
 async function openEditTask(t) {
+  if (isGuest()) return;
   editingTaskId = t.id;
   document.getElementById('taskModalTitle').textContent = '업무 수정';
   document.getElementById('tkTitle').value = t.title;
@@ -2679,6 +2750,7 @@ async function renderTrip() {
 }
 
 function openAddTrip() {
+  if (isGuest()) return;
   editingTripId = null;
   document.getElementById('tripModalTitle').textContent = '출장 등록';
   document.getElementById('trDate').value = fmt(new Date());
@@ -2691,6 +2763,7 @@ function openAddTrip() {
 }
 
 function openEditTrip(memberName, dateStr, trip) {
+  if (isGuest()) return;
   editingTripId = trip ? trip.id : null;
   document.getElementById('tripModalTitle').textContent = trip ? '출장 수정' : '출장 등록';
   document.getElementById('trDate').value = dateStr;
@@ -2798,6 +2871,7 @@ async function renderNotices() {
 }
 
 function openAddNotice() {
+  if (isGuest()) return;
   editingNoticeId = null;
   document.getElementById('noticeModalTitle').textContent = '공지 작성';
   document.getElementById('ntTitle').value = '';
@@ -2807,6 +2881,7 @@ function openAddNotice() {
   openModal('noticeModal');
 }
 function openEditNotice(n) {
+  if (isGuest()) return;
   editingNoticeId = n.id;
   document.getElementById('noticeModalTitle').textContent = '공지 수정';
   document.getElementById('ntTitle').value = n.title;
