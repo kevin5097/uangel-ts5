@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>UANGEL TS5팀 일정 협업 대시보드</title>
+<title>팀 일정 협업 대시보드</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
@@ -410,7 +410,9 @@ body.guest-mode #addNoticeBtn,
 body.guest-mode #todoAddBtn,
 body.guest-mode #tripAddBtn,
 body.guest-mode #projAddBtn,
-body.guest-mode #projLogBtn { display: none !important; }
+body.guest-mode #projLogBtn,
+body.guest-mode #ganttAddTaskBtn,
+body.guest-mode .gantt-add-project-btn { display: none !important; }
 /* 게스트 배너로 인한 콘텐츠 여백 */
 body.guest-mode .content { padding-top: 14px; }
 @media(max-width:640px){
@@ -489,6 +491,39 @@ body.guest-mode .content { padding-top: 14px; }
 .ltb-issue{background:#fee2e2;color:#dc2626}
 .proj-log-empty{text-align:center;padding:32px;color:#cbd5e1;font-size:13px}
 
+/* ===== 간트 차트 탭 ===== */
+.gantt-project-tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;align-items:center}
+.gantt-wrap{background:#fff;border-radius:16px;padding:20px;box-shadow:0 2px 8px rgba(0,0,0,.06)}
+.gantt-toolbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px}
+.gantt-scroll{overflow-x:auto;border:1px solid #e2e8f0;border-radius:10px;-webkit-overflow-scrolling:touch}
+.gantt-grid{position:relative;display:inline-block;min-width:100%}
+.gantt-row{display:flex;border-bottom:1px solid #f1f5f9}
+.gantt-row:last-child{border-bottom:none}
+.gantt-row.gantt-header-row{border-bottom:2px solid #e2e8f0;position:sticky;top:0;background:#fff;z-index:3}
+.gantt-label{flex:0 0 200px;padding:10px 12px;font-size:12px;font-weight:600;color:#1e293b;position:sticky;left:0;background:#fff;z-index:2;border-right:1px solid #e2e8f0;display:flex;align-items:center;gap:6px;cursor:pointer;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.gantt-label-meta{font-size:13px;margin-left:auto;flex-shrink:0}
+.gantt-header-label{font-weight:700;color:#64748b;cursor:default}
+.gantt-timeline{position:relative;height:44px;flex-shrink:0}
+.gantt-header-row .gantt-timeline{height:auto;display:flex;flex-direction:column}
+.gantt-month-row{display:flex;height:20px;border-bottom:1px solid #f1f5f9}
+.gantt-month-cell{font-size:11px;font-weight:700;color:#475569;padding-left:4px;border-left:1px solid #f1f5f9;display:flex;align-items:center;flex-shrink:0}
+.gantt-day-row{display:flex;height:32px}
+.gantt-day-cell{flex-shrink:0;font-size:10px;line-height:1.2;color:#94a3b8;text-align:center;border-left:1px solid #f8fafc;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.gantt-day-cell.weekend{background:#f8fafc}
+.gantt-day-cell.is-today{color:#2563eb;font-weight:700}
+.gantt-bar{position:absolute;top:9px;height:26px;border-radius:6px;display:flex;align-items:center;padding:0 8px;font-size:11px;color:#fff;font-weight:600;white-space:nowrap;overflow:hidden;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.15);transition:.15s}
+.gantt-bar:hover{filter:brightness(1.08);transform:translateY(-1px)}
+.gantt-bar-fill{position:absolute;left:0;top:0;bottom:0;background:rgba(255,255,255,.32);border-radius:6px 0 0 6px}
+.gantt-bar-label{position:relative;z-index:1}
+.gantt-today-line{position:absolute;top:0;bottom:0;width:2px;background:#ef4444;z-index:1;pointer-events:none}
+.gantt-today-line::after{content:'오늘';position:absolute;top:-16px;left:-12px;font-size:10px;color:#ef4444;font-weight:700;white-space:nowrap}
+.gantt-empty{text-align:center;padding:60px 20px;color:#94a3b8;font-size:13px}
+.gantt-color-swatch{width:28px;height:28px;border-radius:50%;cursor:pointer;border:3px solid transparent;flex-shrink:0}
+@media(max-width:640px){
+  .gantt-label{flex:0 0 120px;font-size:11px;padding:8px 8px}
+  .gantt-bar-label{display:none}
+}
+
 /* ===== 통합 홈 탭 ===== */
 .home-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
 .home-grid-full{grid-column:1/-1}
@@ -553,7 +588,7 @@ body.guest-mode .content { padding-top: 14px; }
 <div id="loginScreen">
   <div class="login-box">
     <div class="login-logo">🏢</div>
-    <h1>UANGEL TS5팀 협업 대시보드</h1>
+    <h1>팀 협업 대시보드</h1>
     <p>비밀번호를 입력해 주세요</p>
     <input class="login-input" type="password" id="pwInput" placeholder="••••••••••">
     <button class="login-btn" id="loginBtn" onclick="doLogin()">입장하기</button>
@@ -576,7 +611,7 @@ body.guest-mode .content { padding-top: 14px; }
 <!-- APP -->
 <div id="app" style="display:none;flex-direction:column;min-height:100vh">
   <div class="topbar">
-    <span class="topbar-logo">UANGEL TS5팀 대시보드</span>
+    <span class="topbar-logo">🏢 팀 대시보드</span>
     <div class="topbar-right">
       <div title="실시간 연결됨" class="realtime-dot"></div>
       <div class="current-user">
@@ -594,6 +629,7 @@ body.guest-mode .content { padding-top: 14px; }
     <button class="tab-btn" onclick="showTab('notice',this)">📢 공지사항 <span id="noticeBadge" style="display:none;background:#ef4444;color:#fff;font-size:10px;padding:1px 5px;border-radius:8px;margin-left:4px"></span></button>
     <button class="tab-btn" id="dashTab" onclick="showTab('dashboard',this)" style="display:none">📊 팀장 대시보드</button>
     <button class="tab-btn" onclick="showTab('project',this)">🤖 AI 프로젝트</button>
+    <button class="tab-btn" onclick="showTab('gantt',this)">📊 간트 차트</button>
   </div>
   <div class="content">
 
@@ -678,6 +714,21 @@ body.guest-mode .content { padding-top: 14px; }
           </div>
         </div>
         <div id="projLogList"></div>
+      </div>
+    </div>
+
+    <!-- 간트 차트 탭 -->
+    <div id="tabGantt" style="display:none">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px">
+        <h2 style="font-size:22px;font-weight:700">📊 프로젝트 간트 차트</h2>
+        <button class="btn btn-primary" id="ganttAddTaskBtn" onclick="openAddGanttTask()" style="display:none">+ 태스크 추가</button>
+      </div>
+      <div class="gantt-project-tabs" id="ganttProjectTabs"></div>
+      <div class="gantt-wrap">
+        <div class="gantt-toolbar">
+          <div id="ganttProjTitle" style="font-size:15px;font-weight:700;color:#1e293b"></div>
+        </div>
+        <div id="ganttBody"></div>
       </div>
     </div>
 
@@ -893,6 +944,9 @@ body.guest-mode .content { padding-top: 14px; }
   <button class="bnav-btn" id="bnav-project" onclick="showTabMobile('project',this)">
     <span class="bnav-icon">🤖</span><span>AI</span>
   </button>
+  <button class="bnav-btn" id="bnav-gantt" onclick="showTabMobile('gantt',this)">
+    <span class="bnav-icon">📊</span><span>간트</span>
+  </button>
 </nav>
 
 <!-- TRIP MODAL -->
@@ -1003,6 +1057,56 @@ body.guest-mode .content { padding-top: 14px; }
       <button class="btn btn-ghost" onclick="closeModal('projLogModal')">취소</button>
       <button class="btn btn-danger" id="plDeleteBtn" onclick="deleteProjLog()" style="display:none">삭제</button>
       <button class="btn btn-primary" id="plSaveBtn" onclick="saveProjLog()">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- GANTT PROJECT MODAL -->
+<div class="modal-overlay" id="ganttProjectModal">
+  <div class="modal" style="width:380px">
+    <h3 id="ganttProjectModalTitle">프로젝트 추가</h3>
+    <div class="form-group"><label class="form-label">프로젝트명</label><input class="form-input" id="gpName" placeholder="예: 신규 출입통제 시스템"></div>
+    <div class="form-group">
+      <label class="form-label">색상</label>
+      <div id="gpColorPicker" style="display:flex;gap:8px;flex-wrap:wrap"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('ganttProjectModal')">취소</button>
+      <button class="btn btn-danger" id="gpDeleteBtn" onclick="deleteGanttProject()" style="display:none">삭제</button>
+      <button class="btn btn-primary" id="gpSaveBtn" onclick="saveGanttProject()">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- GANTT TASK MODAL -->
+<div class="modal-overlay" id="ganttTaskModal">
+  <div class="modal" style="width:440px">
+    <h3 id="ganttTaskModalTitle">태스크 추가</h3>
+    <div class="form-group"><label class="form-label">태스크명</label><input class="form-input" id="gtTitle" placeholder="작업 내용"></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">시작일</label><input class="form-input" type="date" id="gtStart"></div>
+      <div class="form-group"><label class="form-label">종료일</label><input class="form-input" type="date" id="gtEnd"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">담당자</label><select class="form-select" id="gtMember"></select></div>
+      <div class="form-group"><label class="form-label">상태</label>
+        <select class="form-select" id="gtStatus">
+          <option value="todo">⏳ 대기</option>
+          <option value="doing">🔄 진행중</option>
+          <option value="done">✅ 완료</option>
+          <option value="blocked">🚫 블로킹</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">진행률 <span id="gtProgressVal">0%</span></label>
+      <input type="range" id="gtProgress" min="0" max="100" step="5" value="0" oninput="document.getElementById('gtProgressVal').textContent=this.value+'%'" style="width:100%;accent-color:#2563eb">
+    </div>
+    <div class="form-group"><label class="form-label">메모</label><textarea class="form-textarea" id="gtNote" placeholder="세부 내용 (선택)"></textarea></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('ganttTaskModal')">취소</button>
+      <button class="btn btn-danger" id="gtDeleteBtn" onclick="deleteGanttTask()" style="display:none">삭제</button>
+      <button class="btn btn-primary" id="gtSaveBtn" onclick="saveGanttTask()">저장</button>
     </div>
   </div>
 </div>
@@ -1328,13 +1432,19 @@ function setupRealtime() {
     .on('postgres_changes', { event:'*', schema:'public', table:'proj_logs' }, () => {
       if (activeTab==='project') getProjLogs().then(renderProjLogs);
     })
+    .on('postgres_changes', { event:'*', schema:'public', table:'gantt_projects' }, () => {
+      if (activeTab==='gantt') renderGantt();
+    })
+    .on('postgres_changes', { event:'*', schema:'public', table:'gantt_tasks' }, () => {
+      if (activeTab==='gantt') renderGantt();
+    })
     .subscribe();
 }
 
 // ===== TABS =====
 function showTab(name, btn) {
   activeTab = name;
-  ['home','project','calendar','todo','trip','notice','dashboard'].forEach(t => {
+  ['home','project','gantt','calendar','todo','trip','notice','dashboard'].forEach(t => {
     const el = document.getElementById('tab'+t.charAt(0).toUpperCase()+t.slice(1));
     if (el) el.style.display = t===name?'block':'none';
   });
@@ -1346,7 +1456,7 @@ function runTab(name) {
   const renders = {
     home: renderHome, calendar: renderCalendar, todo: renderTodo,
     trip: renderTrip, notice: renderNotices, dashboard: renderDashboard,
-    project: renderProject
+    project: renderProject, gantt: renderGantt
   };
   if (renders[name]) {
     Promise.resolve(renders[name]()).catch(e => {
@@ -2295,6 +2405,303 @@ function renderProjLogs(logs) {
   }).join('');
 }
 
+// ===== GANTT 차트 탭 =====
+const GANTT_DAY_W = 30;
+const GANTT_COLORS = ['#2563eb','#7c3aed','#db2777','#dc2626','#d97706','#059669','#0891b2','#475569'];
+let currentGanttProjectId = null;
+let editingGanttProjectId = null;
+let editingGanttTaskId = null;
+let gpSelectedColor = GANTT_COLORS[0];
+
+function parseISODate(s) { return new Date(s + 'T00:00:00'); }
+function ganttDiffDays(a, b) { return Math.round((b - a) / 86400000); }
+
+// DB CRUD
+async function getGanttProjects() {
+  const { data, error } = await sb.from('gantt_projects').select('*').order('created_at');
+  if (error) { console.error(error); return []; }
+  return data || [];
+}
+async function upsertGanttProject(p) {
+  const { error } = await sb.from('gantt_projects').upsert(p);
+  if (error) throw error;
+}
+async function deleteGanttProjectById(id) {
+  const { error } = await sb.from('gantt_projects').delete().eq('id', id);
+  if (error) throw error;
+}
+async function getGanttTasks(projectId) {
+  const { data, error } = await sb.from('gantt_tasks').select('*').eq('project_id', projectId).order('start_date');
+  if (error) { console.error(error); return []; }
+  return data || [];
+}
+async function upsertGanttTask(t) {
+  const { error } = await sb.from('gantt_tasks').upsert(t);
+  if (error) throw error;
+}
+async function deleteGanttTaskById(id) {
+  const { error } = await sb.from('gantt_tasks').delete().eq('id', id);
+  if (error) throw error;
+}
+
+// 렌더
+async function renderGantt() {
+  const projects = await getGanttProjects();
+  if (!projects.length) {
+    currentGanttProjectId = null;
+    renderGanttProjectTabs(projects);
+    document.getElementById('ganttProjTitle').textContent = '';
+    document.getElementById('ganttAddTaskBtn').style.display = 'none';
+    document.getElementById('ganttBody').innerHTML =
+      `<div class="gantt-empty">📊 아직 프로젝트가 없습니다<br><br>
+        <button class="btn btn-primary" onclick="openAddGanttProject()">+ 프로젝트 추가</button>
+      </div>`;
+    return;
+  }
+  if (!currentGanttProjectId || !projects.find(p => p.id === currentGanttProjectId)) {
+    currentGanttProjectId = projects[0].id;
+  }
+  renderGanttProjectTabs(projects);
+  const project = projects.find(p => p.id === currentGanttProjectId);
+  const tasks = await getGanttTasks(currentGanttProjectId);
+  renderGanttChart(project, tasks);
+}
+
+function renderGanttProjectTabs(projects) {
+  const c = document.getElementById('ganttProjectTabs');
+  c.innerHTML = '';
+  projects.forEach(p => {
+    const tab = document.createElement('div');
+    tab.className = 'site-tab' + (currentGanttProjectId === p.id ? ' active' : '');
+    tab.innerHTML =
+      `<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${p.color || '#2563eb'};flex-shrink:0"></span>${p.name}<span class="del-site-btn" onclick="openEditGanttProject('${p.id}',event)">✏️</span>`;
+    tab.onclick = e => {
+      if (e.target.classList.contains('del-site-btn')) return;
+      currentGanttProjectId = p.id;
+      renderGantt();
+    };
+    c.appendChild(tab);
+  });
+  const addBtn = document.createElement('button');
+  addBtn.className = 'add-site-btn gantt-add-project-btn';
+  addBtn.textContent = '+ 프로젝트 추가';
+  addBtn.onclick = () => openAddGanttProject();
+  c.appendChild(addBtn);
+}
+
+function renderGanttChart(project, tasks) {
+  const body = document.getElementById('ganttBody');
+  if (!project) { body.innerHTML = ''; return; }
+
+  document.getElementById('ganttProjTitle').textContent = project.name;
+  document.getElementById('ganttAddTaskBtn').style.display = isGuest() ? 'none' : 'inline-block';
+
+  if (!tasks.length) {
+    body.innerHTML =
+      `<div class="gantt-empty">📭 이 프로젝트에 태스크가 없습니다<br><br>
+        <button class="btn btn-primary" onclick="openAddGanttTask()">+ 태스크 추가</button>
+      </div>`;
+    return;
+  }
+
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  let minD = parseISODate(tasks[0].start_date), maxD = parseISODate(tasks[0].end_date);
+  tasks.forEach(t => {
+    const s = parseISODate(t.start_date), e = parseISODate(t.end_date);
+    if (s < minD) minD = s;
+    if (e > maxD) maxD = e;
+  });
+  if (today < minD) minD = new Date(today);
+  if (today > maxD) maxD = new Date(today);
+  minD = addDays(minD, -2);
+  maxD = addDays(maxD, 3);
+  const totalDays = ganttDiffDays(minD, maxD) + 1;
+  const totalW = totalDays * GANTT_DAY_W;
+
+  const dayArr = ['일','월','화','수','목','금','토'];
+  let monthCells = '', dayCells = '';
+  let curMonthLabel = '', curMonthDays = 0;
+  for (let i = 0; i < totalDays; i++) {
+    const d = addDays(minD, i);
+    const ml = `${d.getFullYear()}.${d.getMonth() + 1}`;
+    if (ml !== curMonthLabel) {
+      if (curMonthLabel) monthCells += `<div class="gantt-month-cell" style="width:${curMonthDays * GANTT_DAY_W}px">${curMonthLabel}</div>`;
+      curMonthLabel = ml; curMonthDays = 0;
+    }
+    curMonthDays++;
+    const isWeekend = d.getDay() === 0 || d.getDay() === 6;
+    const isToday = fmt(d) === fmt(today);
+    dayCells += `<div class="gantt-day-cell${isWeekend ? ' weekend' : ''}${isToday ? ' is-today' : ''}" style="width:${GANTT_DAY_W}px">${d.getDate()}<span style="font-size:8px">${dayArr[d.getDay()]}</span></div>`;
+  }
+  monthCells += `<div class="gantt-month-cell" style="width:${curMonthDays * GANTT_DAY_W}px">${curMonthLabel}</div>`;
+
+  const todayOffset = ganttDiffDays(minD, today) * GANTT_DAY_W + GANTT_DAY_W / 2;
+  const statusColor = { todo: '#94a3b8', doing: '#2563eb', done: '#10b981', blocked: '#ef4444' };
+
+  let rows = `<div class="gantt-row gantt-header-row">
+      <div class="gantt-label gantt-header-label">태스크 (${tasks.length})</div>
+      <div class="gantt-timeline" style="width:${totalW}px">
+        <div class="gantt-month-row">${monthCells}</div>
+        <div class="gantt-day-row">${dayCells}</div>
+      </div>
+    </div>`;
+
+  tasks.forEach(t => {
+    const s = parseISODate(t.start_date), e = parseISODate(t.end_date);
+    const left = ganttDiffDays(minD, s) * GANTT_DAY_W;
+    const width = Math.max((ganttDiffDays(s, e) + 1) * GANTT_DAY_W - 4, 16);
+    const m = MEMBERS.find(x => x.name === t.member);
+    const color = statusColor[t.status] || statusColor.todo;
+    rows += `<div class="gantt-row">
+      <div class="gantt-label" onclick="openEditGanttTask('${t.id}')">
+        <span>${t.title}</span>
+        <span class="gantt-label-meta">${m ? m.emoji : ''}</span>
+      </div>
+      <div class="gantt-timeline" style="width:${totalW}px">
+        <div class="gantt-bar" style="left:${left + 2}px;width:${width}px;background:${color}" onclick="openEditGanttTask('${t.id}')" title="${t.title} (${t.start_date} ~ ${t.end_date}, ${t.progress || 0}%)">
+          <div class="gantt-bar-fill" style="width:${t.progress || 0}%"></div>
+          <span class="gantt-bar-label">${t.title}</span>
+        </div>
+      </div>
+    </div>`;
+  });
+
+  body.innerHTML = `<div class="gantt-scroll"><div class="gantt-grid">
+      ${rows}
+      <div class="gantt-today-line" style="left:${200 + todayOffset}px"></div>
+    </div></div>`;
+}
+
+// 프로젝트 모달
+function renderGanttColorPicker(selected) {
+  gpSelectedColor = selected || GANTT_COLORS[0];
+  document.getElementById('gpColorPicker').innerHTML = GANTT_COLORS.map(c =>
+    `<div class="gantt-color-swatch" data-color="${c}" onclick="selectGanttColor('${c}')" style="background:${c};border-color:${c === gpSelectedColor ? '#1e293b' : 'transparent'}"></div>`
+  ).join('');
+}
+function selectGanttColor(c) {
+  gpSelectedColor = c;
+  document.querySelectorAll('#gpColorPicker .gantt-color-swatch').forEach(d => {
+    d.style.borderColor = d.dataset.color === c ? '#1e293b' : 'transparent';
+  });
+}
+function openAddGanttProject() {
+  if (isGuest()) return;
+  editingGanttProjectId = null;
+  document.getElementById('ganttProjectModalTitle').textContent = '프로젝트 추가';
+  document.getElementById('gpName').value = '';
+  document.getElementById('gpDeleteBtn').style.display = 'none';
+  renderGanttColorPicker(GANTT_COLORS[Math.floor(Math.random() * GANTT_COLORS.length)]);
+  openModal('ganttProjectModal');
+}
+async function openEditGanttProject(id, e) {
+  if (e) e.stopPropagation();
+  if (isGuest()) return;
+  const projects = await getGanttProjects();
+  const p = projects.find(x => x.id === id);
+  if (!p) return;
+  editingGanttProjectId = id;
+  document.getElementById('ganttProjectModalTitle').textContent = '프로젝트 수정';
+  document.getElementById('gpName').value = p.name;
+  document.getElementById('gpDeleteBtn').style.display = 'inline-block';
+  renderGanttColorPicker(p.color);
+  openModal('ganttProjectModal');
+}
+async function saveGanttProject() {
+  const name = document.getElementById('gpName').value.trim();
+  if (!name) { alert('프로젝트명을 입력해 주세요'); return; }
+  const btn = document.getElementById('gpSaveBtn');
+  btn.disabled = true;
+  try {
+    const id = editingGanttProjectId || uid();
+    await upsertGanttProject({ id, name, color: gpSelectedColor });
+    closeModal('ganttProjectModal');
+    currentGanttProjectId = id;
+    await renderGantt();
+  } catch (e) { alert('저장 실패: ' + e.message); }
+  btn.disabled = false;
+}
+async function deleteGanttProject() {
+  if (!confirm('이 프로젝트와 모든 태스크를 삭제할까요?')) return;
+  try {
+    await deleteGanttProjectById(editingGanttProjectId);
+    closeModal('ganttProjectModal');
+    currentGanttProjectId = null;
+    await renderGantt();
+  } catch (e) { alert('삭제 실패: ' + e.message); }
+}
+
+// 태스크 모달
+function openAddGanttTask() {
+  if (isGuest()) return;
+  if (!currentGanttProjectId) { alert('먼저 프로젝트를 추가해 주세요'); return; }
+  editingGanttTaskId = null;
+  document.getElementById('ganttTaskModalTitle').textContent = '태스크 추가';
+  document.getElementById('gtTitle').value = '';
+  const today = fmt(new Date());
+  document.getElementById('gtStart').value = today;
+  document.getElementById('gtEnd').value = today;
+  document.getElementById('gtStatus').value = 'todo';
+  document.getElementById('gtProgress').value = 0;
+  document.getElementById('gtProgressVal').textContent = '0%';
+  document.getElementById('gtNote').value = '';
+  document.getElementById('gtDeleteBtn').style.display = 'none';
+  populateMembers('gtMember', currentUser ? currentUser.name : '');
+  openModal('ganttTaskModal');
+}
+async function openEditGanttTask(id) {
+  if (isGuest()) return;
+  const tasks = await getGanttTasks(currentGanttProjectId);
+  const t = tasks.find(x => x.id === id);
+  if (!t) return;
+  editingGanttTaskId = id;
+  document.getElementById('ganttTaskModalTitle').textContent = '태스크 수정';
+  document.getElementById('gtTitle').value = t.title;
+  document.getElementById('gtStart').value = t.start_date;
+  document.getElementById('gtEnd').value = t.end_date;
+  document.getElementById('gtStatus').value = t.status || 'todo';
+  document.getElementById('gtProgress').value = t.progress || 0;
+  document.getElementById('gtProgressVal').textContent = (t.progress || 0) + '%';
+  document.getElementById('gtNote').value = t.note || '';
+  document.getElementById('gtDeleteBtn').style.display = 'inline-block';
+  populateMembers('gtMember', t.member);
+  openModal('ganttTaskModal');
+}
+async function saveGanttTask() {
+  const title = document.getElementById('gtTitle').value.trim();
+  if (!title) { alert('태스크명을 입력해 주세요'); return; }
+  const start = document.getElementById('gtStart').value;
+  const end = document.getElementById('gtEnd').value;
+  if (!start || !end) { alert('시작일과 종료일을 입력해 주세요'); return; }
+  if (end < start) { alert('종료일은 시작일보다 빠를 수 없습니다'); return; }
+  const btn = document.getElementById('gtSaveBtn');
+  btn.disabled = true;
+  try {
+    await upsertGanttTask({
+      id: editingGanttTaskId || uid(),
+      project_id: currentGanttProjectId,
+      title,
+      start_date: start,
+      end_date: end,
+      member: document.getElementById('gtMember').value,
+      status: document.getElementById('gtStatus').value,
+      progress: parseInt(document.getElementById('gtProgress').value),
+      note: document.getElementById('gtNote').value.trim(),
+    });
+    closeModal('ganttTaskModal');
+    await renderGantt();
+  } catch (e) { alert('저장 실패: ' + e.message); }
+  btn.disabled = false;
+}
+async function deleteGanttTask() {
+  if (!confirm('태스크를 삭제할까요?')) return;
+  try {
+    await deleteGanttTaskById(editingGanttTaskId);
+    closeModal('ganttTaskModal');
+    await renderGantt();
+  } catch (e) { alert('삭제 실패: ' + e.message); }
+}
+
 // ===== WEEKLY REPORT =====
 const DAY_KO = ['일','월','화','수','목','금','토'];
 
@@ -2920,7 +3327,7 @@ async function deleteNotice() {
 function showTabMobile(name, bnavBtn) {
   // 탭 콘텐츠 전환 (기존 showTab 로직 재사용)
   activeTab = name;
-  ['home','project','calendar','todo','trip','notice','dashboard'].forEach(t => {
+  ['home','project','gantt','calendar','todo','trip','notice','dashboard'].forEach(t => {
     const el = document.getElementById('tab'+t.charAt(0).toUpperCase()+t.slice(1));
     if (el) el.style.display = t===name?'block':'none';
   });
