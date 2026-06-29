@@ -232,6 +232,7 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f0
 .notice-card.pinned{border-left-color:#f59e0b;background:#fffdf5}
 .notice-card-top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:8px}
 .notice-pin-badge{font-size:11px;background:#fef3c7;color:#b45309;padding:2px 8px;border-radius:10px;font-weight:700;flex-shrink:0;margin-top:2px}
+.notice-date-badge{font-size:12px;background:#eff6ff;color:#2563eb;padding:3px 10px;border-radius:10px;font-weight:700;flex-shrink:0;white-space:nowrap}
 .notice-title{font-size:16px;font-weight:700;color:#1e293b}
 .notice-content{font-size:14px;color:#475569;line-height:1.65;white-space:pre-wrap}
 .notice-meta{font-size:11px;color:#94a3b8;margin-top:10px;display:flex;align-items:center;gap:10px}
@@ -626,7 +627,7 @@ body.guest-mode .content { padding-top: 14px; }
     <button class="tab-btn" onclick="showTab('calendar',this)">📅 캘린더</button>
     <button class="tab-btn" onclick="showTab('todo',this)">✅ TO-DO</button>
     <button class="tab-btn" onclick="showTab('trip',this)">📍 출장 현황</button>
-    <button class="tab-btn" onclick="showTab('notice',this)">📢 공지사항 <span id="noticeBadge" style="display:none;background:#ef4444;color:#fff;font-size:10px;padding:1px 5px;border-radius:8px;margin-left:4px"></span></button>
+    <button class="tab-btn" onclick="showTab('notice',this)">📋 회의록 <span id="noticeBadge" style="display:none;background:#ef4444;color:#fff;font-size:10px;padding:1px 5px;border-radius:8px;margin-left:4px"></span></button>
     <button class="tab-btn" id="dashTab" onclick="showTab('dashboard',this)" style="display:none">📊 팀장 대시보드</button>
     <button class="tab-btn" onclick="showTab('project',this)">🤖 AI 프로젝트</button>
     <button class="tab-btn" onclick="showTab('gantt',this)">📊 간트 차트</button>
@@ -807,11 +808,11 @@ body.guest-mode .content { padding-top: 14px; }
       <div id="tripHistoryTable"></div>
     </div>
 
-    <!-- NOTICE TAB -->
+    <!-- 회의록 TAB -->
     <div id="tabNotice" style="display:none">
       <div class="notice-header">
-        <h2 style="font-size:22px;font-weight:700">📢 공지사항</h2>
-        <button class="btn btn-primary" id="addNoticeBtn" onclick="openAddNotice()" style="display:none">+ 공지 작성</button>
+        <h2 style="font-size:22px;font-weight:700">📋 회의록</h2>
+        <button class="btn btn-primary" id="addNoticeBtn" onclick="openAddNotice()" style="display:none">+ 회의록 작성</button>
       </div>
       <div class="notice-list" id="noticeList"></div>
     </div>
@@ -938,8 +939,8 @@ body.guest-mode .content { padding-top: 14px; }
     <span class="bnav-icon">📍</span><span>출장</span>
   </button>
   <button class="bnav-btn" id="bnav-notice" onclick="showTabMobile('notice',this)">
-    <span class="bnav-icon" style="position:relative">📢<span class="bnav-badge" id="bnavNoticeBadge" style="display:none"></span></span>
-    <span>공지</span>
+    <span class="bnav-icon" style="position:relative">📋<span class="bnav-badge" id="bnavNoticeBadge" style="display:none"></span></span>
+    <span>회의록</span>
   </button>
   <button class="bnav-btn" id="bnav-project" onclick="showTabMobile('project',this)">
     <span class="bnav-icon">🤖</span><span>AI</span>
@@ -984,23 +985,23 @@ body.guest-mode .content { padding-top: 14px; }
   </div>
 </div>
 
-<!-- NOTICE MODAL -->
+<!-- MEETING NOTE MODAL -->
 <div class="modal-overlay" id="noticeModal">
   <div class="modal" style="width:500px">
-    <h3 id="noticeModalTitle">공지 작성</h3>
-    <div class="form-group">
-      <label class="form-label">제목</label>
-      <input class="form-input" id="ntTitle" placeholder="공지 제목">
+    <h3 id="noticeModalTitle">회의록 작성</h3>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">회의 날짜</label>
+        <input class="form-input" type="date" id="ntDate">
+      </div>
+      <div class="form-group">
+        <label class="form-label">회의 제목 <span style="font-weight:400;color:#94a3b8;text-transform:none;letter-spacing:0">(선택)</span></label>
+        <input class="form-input" id="ntTitle" placeholder="예: 주간 정기회의">
+      </div>
     </div>
     <div class="form-group">
       <label class="form-label">내용</label>
-      <textarea class="form-textarea" id="ntContent" style="min-height:120px" placeholder="공지 내용을 입력하세요"></textarea>
-    </div>
-    <div class="form-group">
-      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:14px;color:#1e293b">
-        <input type="checkbox" id="ntPinned" style="width:16px;height:16px;accent-color:#f59e0b">
-        📌 상단 고정 (중요 공지)
-      </label>
+      <textarea class="form-textarea" id="ntContent" style="min-height:160px" placeholder="회의 내용, 결정사항, 액션 아이템 등을 입력하세요"></textarea>
     </div>
     <div class="modal-actions">
       <button class="btn btn-ghost" onclick="closeModal('noticeModal')">취소</button>
@@ -1264,12 +1265,12 @@ async function deleteTripById(id) {
 }
 
 async function getNotices() {
-  const { data, error } = await sb.from('notices').select('*').order('pinned',{ascending:false}).order('created_at',{ascending:false});
+  const { data, error } = await sb.from('notices').select('*').order('meeting_date',{ascending:false}).order('created_at',{ascending:false});
   if (error) { console.error(error); return []; }
   return data || [];
 }
 async function upsertNotice(n) {
-  const { error } = await sb.from('notices').upsert({ id:n.id, title:n.title, content:n.content, author:n.author, pinned:n.pinned });
+  const { error } = await sb.from('notices').upsert({ id:n.id, title:n.title, content:n.content, author:n.author, meeting_date:n.meeting_date });
   if (error) throw error;
 }
 async function deleteNoticeById(id) {
@@ -1360,7 +1361,7 @@ async function selectMember(m) {
   document.getElementById('topUserDot').textContent = m.emoji;
   document.getElementById('topUserName').textContent = m.name + (m.role==='팀장' ? ' (팀장)' : m.role==='guest' ? ' (열람 전용)' : '');
   document.getElementById('dashTab').style.display = m.role==='팀장' ? 'block' : 'none';
-  document.getElementById('addNoticeBtn').style.display = m.role==='팀장' ? 'inline-block' : 'none';
+  document.getElementById('addNoticeBtn').style.display = m.role!=='guest' ? 'inline-block' : 'none';
   // 게스트 읽기 전용 배너 & body 클래스
   const guestBanner = document.getElementById('guestBanner');
   if (guestBanner) guestBanner.style.display = m.role==='guest' ? 'flex' : 'none';
@@ -3244,23 +3245,24 @@ async function renderNotices() {
   const notices = await getNotices();
   const list = document.getElementById('noticeList');
   if (!notices.length) {
-    list.innerHTML = `<div class="notice-empty"><div style="font-size:40px;margin-bottom:12px">📭</div>등록된 공지가 없어요</div>`;
+    list.innerHTML = `<div class="notice-empty"><div style="font-size:40px;margin-bottom:12px">📭</div>등록된 회의록이 없어요</div>`;
     return;
   }
   list.innerHTML = '';
   notices.forEach(n => {
     const m = MEMBERS.find(x=>x.name===n.author)||MEMBERS[0];
-    const date = new Date(n.created_at).toLocaleDateString('ko-KR',{year:'numeric',month:'long',day:'numeric'});
+    const dateStr = n.meeting_date ? new Date(n.meeting_date+'T00:00:00').toLocaleDateString('ko-KR',{year:'numeric',month:'long',day:'numeric',weekday:'short'}) : '';
+    const writtenStr = new Date(n.created_at).toLocaleDateString('ko-KR',{year:'numeric',month:'long',day:'numeric'});
     const card = document.createElement('div');
-    card.className = 'notice-card' + (n.pinned?' pinned':'');
-    const isLeader = currentUser && currentUser.role==='팀장';
+    card.className = 'notice-card';
+    const canEdit = currentUser && (currentUser.role==='팀장' || currentUser.name===n.author);
     card.innerHTML = `
       <div class="notice-card-top">
-        <div style="flex:1">
-          ${n.pinned?'<span class="notice-pin-badge">📌 중요</span> ':''}
-          <div class="notice-title" style="margin-top:${n.pinned?'6px':'0'}">${n.title}</div>
+        <div style="flex:1;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+          ${dateStr?`<span class="notice-date-badge">📅 ${dateStr}</span>`:''}
+          <div class="notice-title" style="margin-top:0">${n.title||'회의록'}</div>
         </div>
-        ${isLeader?`<div class="notice-actions">
+        ${canEdit?`<div class="notice-actions">
           <button class="notice-act-btn" onclick="openEditNotice(${JSON.stringify(n).replace(/"/g,'&quot;')})">수정</button>
           <button class="notice-act-btn" style="color:#ef4444" onclick="confirmDeleteNotice('${n.id}')">삭제</button>
         </div>`:''}
@@ -3269,7 +3271,7 @@ async function renderNotices() {
       <div class="notice-meta">
         <span>${m.emoji} ${m.name}</span>
         <span>·</span>
-        <span>${date}</span>
+        <span>작성 ${writtenStr}</span>
       </div>`;
     list.appendChild(card);
   });
@@ -3280,30 +3282,33 @@ async function renderNotices() {
 function openAddNotice() {
   if (isGuest()) return;
   editingNoticeId = null;
-  document.getElementById('noticeModalTitle').textContent = '공지 작성';
+  document.getElementById('noticeModalTitle').textContent = '회의록 작성';
   document.getElementById('ntTitle').value = '';
   document.getElementById('ntContent').value = '';
-  document.getElementById('ntPinned').checked = false;
+  document.getElementById('ntDate').value = fmt(new Date());
   document.getElementById('ntDeleteBtn').style.display = 'none';
   openModal('noticeModal');
 }
 function openEditNotice(n) {
   if (isGuest()) return;
   editingNoticeId = n.id;
-  document.getElementById('noticeModalTitle').textContent = '공지 수정';
-  document.getElementById('ntTitle').value = n.title;
+  document.getElementById('noticeModalTitle').textContent = '회의록 수정';
+  document.getElementById('ntTitle').value = n.title||'';
   document.getElementById('ntContent').value = n.content||'';
-  document.getElementById('ntPinned').checked = !!n.pinned;
+  document.getElementById('ntDate').value = n.meeting_date||fmt(new Date());
   document.getElementById('ntDeleteBtn').style.display = 'inline-block';
   openModal('noticeModal');
 }
 async function saveNotice() {
+  const meetingDate = document.getElementById('ntDate').value;
+  if (!meetingDate) { alert('회의 날짜를 입력해 주세요'); return; }
+  const content = document.getElementById('ntContent').value.trim();
+  if (!content) { alert('내용을 입력해 주세요'); return; }
   const title = document.getElementById('ntTitle').value.trim();
-  if (!title) { alert('제목을 입력해 주세요'); return; }
   const btn = document.getElementById('ntSaveBtn');
   btn.disabled=true; btn.textContent='저장 중...';
   try {
-    await upsertNotice({ id:editingNoticeId||uid(), title, content:document.getElementById('ntContent').value.trim(), author:currentUser.name, pinned:document.getElementById('ntPinned').checked });
+    await upsertNotice({ id:editingNoticeId||uid(), title, content, author:currentUser.name, meeting_date:meetingDate });
     closeModal('noticeModal');
     await renderNotices();
   } catch(e) { alert('저장 실패: '+e.message); }
