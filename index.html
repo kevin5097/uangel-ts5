@@ -9,8 +9,9 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>유엔젤 TS5 팀 일정 협업 대시보드</title>
+<title>팀 일정 협업 대시보드</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:#f0f4f8;min-height:100vh;color:#1e293b}
@@ -544,6 +545,34 @@ body.guest-mode .content { padding-top: 14px; }
 .home-doing-meta{font-size:11px;color:#94a3b8}
 .home-empty{text-align:center;padding:20px;color:#cbd5e1;font-size:13px}
 
+/* ===== 자연어 출장 입력 ===== */
+.nl-trip-bar{display:flex;gap:8px;margin-bottom:20px;align-items:stretch}
+.nl-trip-input{flex:1;padding:12px 16px;border:2px solid #e2e8f0;border-radius:12px;font-size:14px;outline:none;transition:.2s;background:#fff}
+.nl-trip-input:focus{border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.1)}
+.nl-trip-input::placeholder{color:#94a3b8}
+.nl-trip-btn{padding:10px 20px;background:linear-gradient(135deg,#7c3aed,#2563eb);color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;white-space:nowrap;transition:.15s;display:flex;align-items:center;gap:6px}
+.nl-trip-btn:hover{filter:brightness(1.1);transform:translateY(-1px)}
+.nl-trip-btn:disabled{opacity:.6;cursor:not-allowed;transform:none}
+.nl-parse-result{background:#f0f9ff;border:1.5px solid #bae6fd;border-radius:12px;padding:16px;margin-bottom:16px;display:none}
+.nl-parse-result.show{display:block;animation:fadeIn .25s ease}
+.nl-parse-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px 16px;margin-bottom:12px}
+@media(max-width:600px){.nl-parse-grid{grid-template-columns:1fr}}
+.nl-parse-field{display:flex;align-items:center;gap:8px}
+.nl-pf-label{font-size:11px;font-weight:700;color:#64748b;min-width:50px}
+.nl-pf-value{font-size:14px;font-weight:600;color:#1e293b}
+.nl-parse-actions{display:flex;gap:8px;justify-content:flex-end}
+.nl-confirm-btn{padding:8px 20px;background:#10b981;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer}
+.nl-confirm-btn:hover{background:#059669}
+.nl-cancel-btn{padding:8px 16px;background:#f1f5f9;color:#64748b;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer}
+.nl-cancel-btn:hover{background:#e2e8f0}
+@keyframes fadeIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
+
+/* ===== 보고서 다운로드 ===== */
+.report-download-section{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px}
+.report-dl-btn{display:flex;align-items:center;gap:6px;padding:10px 18px;border:1.5px solid #e2e8f0;border-radius:10px;background:#fff;font-size:13px;font-weight:600;color:#475569;cursor:pointer;transition:.15s}
+.report-dl-btn:hover{border-color:#2563eb;color:#2563eb;background:#eff6ff;transform:translateY(-1px)}
+.report-dl-btn .dl-icon{font-size:16px}
+
 /* ===== 출장 이력 ===== */
 .trip-history-header{display:flex;align-items:center;gap:10px;margin:28px 0 14px;flex-wrap:wrap}
 .trip-history-title{font-size:15px;font-weight:700;color:#1e293b}
@@ -589,7 +618,7 @@ body.guest-mode .content { padding-top: 14px; }
 <div id="loginScreen">
   <div class="login-box">
     <div class="login-logo">🏢</div>
-    <h1>TS5 팀 협업 대시보드</h1>
+    <h1>팀 협업 대시보드</h1>
     <p>비밀번호를 입력해 주세요</p>
     <input class="login-input" type="password" id="pwInput" placeholder="••••••••••">
     <button class="login-btn" id="loginBtn" onclick="doLogin()">입장하기</button>
@@ -612,7 +641,7 @@ body.guest-mode .content { padding-top: 14px; }
 <!-- APP -->
 <div id="app" style="display:none;flex-direction:column;min-height:100vh">
   <div class="topbar">
-    <span class="topbar-logo">🏢 TS5팀 대시보드</span>
+    <span class="topbar-logo">🏢 팀 대시보드</span>
     <div class="topbar-right">
       <div title="실시간 연결됨" class="realtime-dot"></div>
       <div class="current-user">
@@ -752,6 +781,27 @@ body.guest-mode .content { padding-top: 14px; }
           </div>
         </div>
       </div>
+      <!-- 자연어 출장 입력 -->
+      <div class="nl-trip-bar" id="nlTripBar">
+        <input class="nl-trip-input" id="nlTripInput" type="text"
+          placeholder="예: 다음주 화요일 이수민이랑 세종 NPDB 1박2일 출장"
+          onkeydown="if(event.key==='Enter')parseNlTrip()">
+        <button class="nl-trip-btn" id="nlTripBtn" onclick="parseNlTrip()">⚡ 자동 등록</button>
+      </div>
+      <!-- 파싱 결과 미리보기 -->
+      <div class="nl-parse-result" id="nlParseResult">
+        <div style="font-size:12px;font-weight:700;color:#0369a1;margin-bottom:10px">⚡ 파싱 결과</div>
+        <div class="nl-parse-grid" id="nlParseGrid"></div>
+        <div class="nl-parse-actions">
+          <button class="nl-cancel-btn" onclick="cancelNlTrip()">취소</button>
+          <button class="nl-confirm-btn" onclick="confirmNlTrip()">✓ 등록하기</button>
+        </div>
+      </div>
+      <!-- 보고서 다운로드 버튼 -->
+      <div class="report-download-section">
+        <button class="report-dl-btn" onclick="downloadWeeklyReport()"><span class="dl-icon">📊</span> 주간보고 다운로드</button>
+        <button class="report-dl-btn" onclick="downloadMonthlyReport()"><span class="dl-icon">📈</span> 월간보고 다운로드</button>
+      </div>
       <div class="cal-member-filter" id="calMemberFilter"></div>
       <!-- 월간 뷰 -->
       <div id="monthView">
@@ -787,7 +837,9 @@ body.guest-mode .content { padding-top: 14px; }
     <div id="tabTrip" style="display:none">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
         <h2 style="font-size:22px;font-weight:700">📍 출장 현황</h2>
-        <button id="tripAddBtn" class="btn btn-primary" onclick="openAddTrip()">+ 출장 등록</button>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button id="tripAddBtn" class="btn btn-primary" onclick="openAddTrip()">+ 출장 등록</button>
+        </div>
       </div>
       <div style="font-size:13px;color:#64748b;margin-bottom:16px" id="tripTodayLabel"></div>
       <div class="trip-today-grid" id="tripTodayGrid"></div>
@@ -3224,6 +3276,539 @@ async function deleteTrip() {
     await renderTrip();
   } catch(e) { alert('삭제 실패: '+e.message); }
   btn.disabled = false;
+}
+
+// ===== 자연어 출장 파싱 (로컬 JS) =====
+let nlParsedTrip = null;
+
+function parseNlTrip() {
+  if (isGuest()) return;
+  const inp = document.getElementById('nlTripInput');
+  const text = inp.value.trim();
+  if (!text) { inp.focus(); return; }
+  try {
+    nlParsedTrip = localParseTrip(text);
+    showNlParseResult();
+  } catch(e) {
+    console.error('NL parse error:', e);
+    alert('파싱 실패: ' + e.message);
+  }
+}
+
+function localParseTrip(text) {
+  const now = new Date(); now.setHours(0,0,0,0);
+  const DOW_MAP = {'일':0,'월':1,'화':2,'수':3,'목':4,'금':5,'토':6};
+  let remaining = text; // 파싱된 부분을 제거해 나가며 나머지를 메모로
+
+  // ── 날짜 파싱 ──
+  let dates = [];
+  // 1) "M/D", "M월D일"
+  const mdMatch = text.match(/(\d{1,2})\s*[\/월]\s*(\d{1,2})\s*일?/);
+  // 2) "다음주/이번주/다다음주 X요일"
+  const relWeekMatch = text.match(/(다다음주|다음주|이번주|금주|차주)\s*(일|월|화|수|목|금|토)요?일?/);
+  // 3) "내일/모레/글피/오늘"
+  const relDayMatch = text.match(/(오늘|내일|모레|글피)/);
+  // 4) "X요일" (단독)
+  const dowMatch = text.match(/(일|월|화|수|목|금|토)요일/);
+  // 5) YYYY-MM-DD
+  const isoMatch = text.match(/(\d{4})-(\d{1,2})-(\d{1,2})/);
+
+  if (mdMatch) {
+    const m = parseInt(mdMatch[1]) - 1, d = parseInt(mdMatch[2]);
+    const dt = new Date(now.getFullYear(), m, d);
+    if (dt < now) dt.setFullYear(dt.getFullYear() + 1);
+    dates.push(dt);
+    remaining = remaining.replace(mdMatch[0], ' ');
+  } else if (relWeekMatch) {
+    const week = relWeekMatch[1], dow = DOW_MAP[relWeekMatch[2]];
+    const base = new Date(now), todayDow = now.getDay();
+    if (week === '다음주' || week === '차주') {
+      const nextMon = new Date(now);
+      nextMon.setDate(now.getDate() + ((8 - todayDow) % 7 || 7));
+      base.setTime(nextMon.getTime());
+      base.setDate(base.getDate() + (dow === 0 ? 6 : dow - 1));
+    } else if (week === '다다음주') {
+      const nextMon = new Date(now);
+      nextMon.setDate(now.getDate() + ((8 - todayDow) % 7 || 7) + 7);
+      base.setTime(nextMon.getTime());
+      base.setDate(base.getDate() + (dow === 0 ? 6 : dow - 1));
+    } else {
+      let diff = dow - todayDow; if (diff <= 0) diff += 7;
+      base.setDate(now.getDate() + diff);
+    }
+    dates.push(base);
+    remaining = remaining.replace(relWeekMatch[0], ' ');
+  } else if (relDayMatch) {
+    const offsets = {'오늘':0,'내일':1,'모레':2,'글피':3};
+    const dt = new Date(now); dt.setDate(dt.getDate() + offsets[relDayMatch[1]]);
+    dates.push(dt);
+    remaining = remaining.replace(relDayMatch[0], ' ');
+  } else if (dowMatch) {
+    const dow = DOW_MAP[dowMatch[1]];
+    const diff = ((dow - now.getDay()) + 7) % 7 || 7;
+    const dt = new Date(now); dt.setDate(now.getDate() + diff);
+    dates.push(dt);
+    remaining = remaining.replace(dowMatch[0], ' ');
+  } else if (isoMatch) {
+    dates.push(new Date(isoMatch[0] + 'T00:00:00'));
+    remaining = remaining.replace(isoMatch[0], ' ');
+  }
+
+  if (!dates.length) throw new Error('날짜를 인식할 수 없어요. 예: "다음주 화요일", "8/20", "내일"');
+
+  // ── 기간 (N박M일, 이틀, N일간) ──
+  const durationMatch = text.match(/(\d+)\s*박\s*(\d+)\s*일/);
+  if (durationMatch) {
+    const nights = parseInt(durationMatch[1]);
+    const base = dates[0];
+    for (let i = 1; i <= nights; i++) {
+      const dt = new Date(base); dt.setDate(base.getDate() + i); dates.push(dt);
+    }
+    remaining = remaining.replace(durationMatch[0], ' ');
+  } else {
+    const spanMatch = text.match(/(이틀|(\d+)\s*일\s*(간|동안))/);
+    if (spanMatch) {
+      const days = spanMatch[2] ? parseInt(spanMatch[2]) : 2;
+      const base = dates[0];
+      for (let i = 1; i < days; i++) {
+        const dt = new Date(base); dt.setDate(base.getDate() + i); dates.push(dt);
+      }
+      remaining = remaining.replace(spanMatch[0], ' ');
+    }
+  }
+
+  // ── 멤버 매칭 (복수) ──
+  const members = [];
+  for (const m of MEMBERS) {
+    if (remaining.includes(m.name)) {
+      members.push(m.name);
+      remaining = remaining.replace(new RegExp(m.name + '(이랑|하고|,|\\s|과|와)?', 'g'), ' ');
+    } else {
+      const shortName = m.name.slice(1); // 성 제외
+      if (remaining.includes(shortName)) {
+        members.push(m.name);
+        remaining = remaining.replace(new RegExp(shortName + '(이랑|하고|,|\\s|과|와)?', 'g'), ' ');
+      }
+    }
+  }
+  if (!members.length) members.push(currentUser.name);
+
+  // ── 출장지 매칭 ──
+  let location = '';
+  const LOC_KEYWORDS = {
+    'SKB - 동작': ['동작','skb동작','skb-동작'],
+    'SKB - 성북': ['성북','skb성북','skb-성북'],
+    'SKTL - 보라매': ['보라매','sktl','sktl-보라매'],
+    'SDS - 상암': ['상암','sds','sds-상암'],
+    '세종 - 죽전': ['세종','죽전'],
+    '본사': ['본사'],
+  };
+  const lower = remaining.toLowerCase();
+  for (const [loc, kws] of Object.entries(LOC_KEYWORDS)) {
+    const matched = kws.find(k => lower.includes(k));
+    if (matched) {
+      location = loc;
+      remaining = remaining.replace(new RegExp(matched, 'gi'), ' ');
+      break;
+    }
+  }
+  if (!location) location = '(장소 미지정)';
+
+  // ── 불필요 키워드 제거 → 남은 텍스트 = 메모/목적 ──
+  remaining = remaining.replace(/(출장|방문|에서|으로|간다|갑니다|감|예정|합니다|할|거|이랑|하고)/g, ' ');
+  const note = remaining.replace(/\s+/g, ' ').trim();
+
+  return {
+    members,       // 배열: [이수민, 정봉결]
+    dates: dates.map(d => fmt(d)),
+    location,
+    note,
+  };
+}
+
+function showNlParseResult() {
+  if (!nlParsedTrip) return;
+  const grid = document.getElementById('nlParseGrid');
+  const dates = Array.isArray(nlParsedTrip.dates) ? nlParsedTrip.dates : [nlParsedTrip.dates];
+  const dateLabels = dates.map(d => {
+    const dt = new Date(d + 'T00:00:00');
+    return `${dt.getMonth()+1}/${dt.getDate()}(${DAY_KO[dt.getDay()]})`;
+  }).join(', ');
+  const memberLabels = nlParsedTrip.members.map(name => {
+    const m = MEMBERS.find(x => x.name === name);
+    return (m ? m.emoji + ' ' : '') + name;
+  }).join(', ');
+  grid.innerHTML = `
+    <div class="nl-parse-field"><span class="nl-pf-label">📅 날짜</span><span class="nl-pf-value">${dateLabels}</span></div>
+    <div class="nl-parse-field"><span class="nl-pf-label">👤 담당자</span><span class="nl-pf-value">${memberLabels}</span></div>
+    <div class="nl-parse-field"><span class="nl-pf-label">📍 출장지</span><span class="nl-pf-value">${nlParsedTrip.location}</span></div>
+    <div class="nl-parse-field"><span class="nl-pf-label">📝 메모</span><span class="nl-pf-value">${nlParsedTrip.note || '-'}</span></div>`;
+  document.getElementById('nlParseResult').classList.add('show');
+  document.getElementById('nlParseResult').style.display = 'block';
+}
+
+function cancelNlTrip() {
+  nlParsedTrip = null;
+  document.getElementById('nlParseResult').classList.remove('show');
+  document.getElementById('nlParseResult').style.display = 'none';
+}
+
+async function confirmNlTrip() {
+  if (!nlParsedTrip) return;
+  const dates = Array.isArray(nlParsedTrip.dates) ? nlParsedTrip.dates : [nlParsedTrip.dates];
+  const members = nlParsedTrip.members || [currentUser.name];
+  try {
+    // 1) trips 테이블: 멤버별 × 날짜별 각각 저장
+    for (const member of members) {
+      for (const d of dates) {
+        await upsertTrip({
+          id: uid(),
+          member: member,
+          location: nlParsedTrip.location,
+          trip_date: d,
+          note: nlParsedTrip.note || '',
+        });
+      }
+    }
+    // 2) events 테이블: 하나의 일정으로 통합 저장
+    const sortedDates = [...dates].sort();
+    const title = nlParsedTrip.note || `출장: ${nlParsedTrip.location}`;
+    await upsertEvent({
+      id: uid(),
+      title: title,
+      start: sortedDates[0],
+      end: sortedDates[sortedDates.length - 1],
+      member: members.join(', '),
+      note: nlParsedTrip.note || '',
+      site: nlParsedTrip.location,
+    });
+
+    cancelNlTrip();
+    document.getElementById('nlTripInput').value = '';
+    await Promise.all([renderTrip(), renderCalendar()]);
+    const memberNames = members.join(', ');
+    alert(`✅ ${memberNames} — ${dates.length}일 출장 등록 완료!`);
+  } catch(e) {
+    alert('등록 실패: ' + e.message);
+  }
+}
+
+// ===== 주간/월간 보고서 엑셀(.xlsx) 다운로드 =====
+function getWeekStartDate() {
+  const now = new Date();
+  const dow = now.getDay();
+  const d = new Date(now);
+  d.setDate(now.getDate() - (dow === 0 ? 6 : dow - 1));
+  d.setHours(0,0,0,0);
+  return d;
+}
+
+function fmtDateKo(d) {
+  const dt = typeof d === 'string' ? new Date(d+'T00:00:00') : d;
+  return `${dt.getMonth()+1}/${dt.getDate()}(${DAY_KO[dt.getDay()]})`;
+}
+
+function downloadBlob(buffer, filename) {
+  const blob = new Blob([buffer], { type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(link.href);
+}
+
+// ── 스타일 프리셋 ──
+const XL_FONT = { name:'맑은 고딕', size:11 };
+const XL_BORDER_THIN = {
+  top:{style:'thin'}, bottom:{style:'thin'}, left:{style:'thin'}, right:{style:'thin'}
+};
+const XL_HEADER_FILL = { type:'pattern', pattern:'solid', fgColor:{argb:'FFFFFF00'} };
+const XL_SECTION_FILL = { type:'pattern', pattern:'solid', fgColor:{argb:'FFE2EFDA'} };
+const XL_SUBSECTION_FILL = { type:'pattern', pattern:'solid', fgColor:{argb:'FFDCE6F1'} };
+const XL_ALIGN_WRAP = { vertical:'middle', wrapText:true };
+const XL_ALIGN_CENTER = { horizontal:'center', vertical:'middle', wrapText:true };
+
+function xlApplyRow(row, fill, bold=false) {
+  row.eachCell({includeEmpty:true}, c => {
+    c.font = {...XL_FONT, bold};
+    c.border = XL_BORDER_THIN;
+    c.alignment = XL_ALIGN_WRAP;
+    if (fill) c.fill = fill;
+  });
+}
+
+function xlSetupSheet(sheet) {
+  sheet.columns = [
+    { width: 20 },  // A: 과제 영역
+    { width: 20 },  // B: 과제 상세
+    { width: 18 },  // C: 인력투입현황
+    { width: 30 },  // D: 주요 업무
+    { width: 55 },  // E: 현황
+    { width: 55 },  // F: 계획
+    { width: 14 },  // G: 비고/주관자
+  ];
+}
+
+// ── 이벤트/출장을 항목별 텍스트로 변환 ──
+function eventsToText(evs) {
+  if (!evs.length) return '';
+  return evs.map(ev => {
+    const d = fmtDateKo(ev.start);
+    const site = ev.site ? `(${ev.site})` : '';
+    const members = (ev.member||'').split(',').map(s=>s.trim()).filter(Boolean);
+    const who = members.length > 1 ? ` [${members.join(',')}]` : '';
+    return `- ${ev.title}${who}\n  ${d}${site}`;
+  }).join('\n\n');
+}
+
+function tripsToText(trips) {
+  if (!trips.length) return '';
+  return trips.map(t => {
+    const d = fmtDateKo(t.trip_date);
+    return `- ${t.member}: ${t.location} ${d}\n  ${t.note||''}`.trim();
+  }).join('\n');
+}
+
+// ══════════════════════════════
+// 주간보고 다운로드
+// ══════════════════════════════
+async function downloadWeeklyReport() {
+  showLoading('주간보고 생성 중...');
+  try {
+    const wsDate = getWeekStartDate();
+    const weDate = addDays(wsDate, 6);
+    const nwDate = addDays(wsDate, 7);
+    const nweDate = addDays(nwDate, 6);
+    const wsFmt = fmt(wsDate), weFmt = fmt(weDate);
+    const nwsFmt = fmt(nwDate), nweFmt = fmt(nweDate);
+
+    const [events, trips, nextTrips] = await Promise.all([
+      getEvents(),
+      getTrips(wsFmt, weFmt),
+      getTrips(nwsFmt, nweFmt),
+    ]);
+
+    const thisWeekEvs = events.filter(ev => ev.start <= weFmt && (ev.end||ev.start) >= wsFmt);
+    const nextWeekEvs = events.filter(ev => ev.start <= nweFmt && (ev.end||ev.start) >= nwsFmt);
+
+    const thisLabel = `${wsDate.getMonth()+1}/${wsDate.getDate()} ~ ${weDate.getMonth()+1}/${weDate.getDate()}`;
+    const nextLabel = `${nwDate.getMonth()+1}/${nwDate.getDate()} ~ ${nweDate.getMonth()+1}/${nweDate.getDate()}`;
+
+    const wb = new ExcelJS.Workbook();
+    const sheetName = `${String(wsDate.getFullYear()).slice(2)}${String(wsDate.getMonth()+1).padStart(2,'0')}${String(wsDate.getDate()).padStart(2,'0')}`;
+    const sheet = wb.addWorksheet(sheetName);
+    xlSetupSheet(sheet);
+
+    // Row 1: 헤더
+    const hdr = sheet.addRow(['', '과제', '인력투입현황', '주요 업무', `현황(${thisLabel})`, `계획(${nextLabel})`, `주관자: ${currentUser.name}`]);
+    xlApplyRow(hdr, XL_HEADER_FILL, true);
+    hdr.getCell(1).alignment = XL_ALIGN_CENTER;
+    hdr.height = 24;
+
+    // ── 사이트별 그룹화 ──
+    const siteNames = LOCATIONS.map(l=>l.name);
+    const allSites = [...new Set([
+      ...thisWeekEvs.map(e=>(e.site||'').trim()||'기타'),
+      ...nextWeekEvs.map(e=>(e.site||'').trim()||'기타'),
+      ...trips.map(t=>t.location),
+      ...nextTrips.map(t=>t.location),
+    ])].sort((a,b) => {
+      const ai = siteNames.indexOf(a), bi = siteNames.indexOf(b);
+      return (ai===-1?99:ai) - (bi===-1?99:bi);
+    });
+
+    if (allSites.length === 0) allSites.push('(일정 없음)');
+
+    allSites.forEach(site => {
+      // 사이트 헤더
+      const siteEvThis = thisWeekEvs.filter(e => (e.site||'').trim() === site || (!e.site && site==='기타'));
+      const siteEvNext = nextWeekEvs.filter(e => (e.site||'').trim() === site || (!e.site && site==='기타'));
+      const siteTripsThis = trips.filter(t => t.location === site);
+      const siteTripsNext = nextTrips.filter(t => t.location === site);
+      const members = [...new Set([
+        ...siteEvThis.flatMap(e=>(e.member||'').split(',').map(s=>s.trim())),
+        ...siteEvNext.flatMap(e=>(e.member||'').split(',').map(s=>s.trim())),
+        ...siteTripsThis.map(t=>t.member),
+        ...siteTripsNext.map(t=>t.member),
+      ])].filter(Boolean).join(', ');
+
+      const secRow = sheet.addRow([site, '', members, '', '', '', '']);
+      xlApplyRow(secRow, XL_SECTION_FILL, true);
+      secRow.height = 22;
+
+      // 일정 행
+      if (siteEvThis.length || siteEvNext.length) {
+        const evRow = sheet.addRow([
+          '', '일정',
+          '', '',
+          eventsToText(siteEvThis) || '',
+          eventsToText(siteEvNext) || '',
+          ''
+        ]);
+        xlApplyRow(evRow, null, false);
+        evRow.height = Math.max(40, (Math.max(siteEvThis.length, siteEvNext.length)) * 28);
+      }
+
+      // 출장 행
+      if (siteTripsThis.length || siteTripsNext.length) {
+        const trRow = sheet.addRow([
+          '', '출장',
+          '', '',
+          tripsToText(siteTripsThis) || '',
+          tripsToText(siteTripsNext) || '',
+          ''
+        ]);
+        xlApplyRow(trRow, null, false);
+        const subFill = { type:'pattern', pattern:'solid', fgColor:{argb:'FFF2F7FB'} };
+        trRow.getCell(2).fill = subFill;
+        trRow.height = Math.max(30, Math.max(siteTripsThis.length, siteTripsNext.length) * 22);
+      }
+    });
+
+    // ── 출장 현황 요약 ──
+    const tripSecRow = sheet.addRow(['출장 현황', '', '', '', '', '', '']);
+    xlApplyRow(tripSecRow, XL_SUBSECTION_FILL, true);
+    tripSecRow.height = 22;
+
+    MEMBERS.forEach(m => {
+      const mTrips = trips.filter(t=>t.member===m.name);
+      const mNextTrips = nextTrips.filter(t=>t.member===m.name);
+      if (mTrips.length || mNextTrips.length) {
+        const r = sheet.addRow([
+          '', m.name, '', '',
+          mTrips.map(t => `${fmtDateKo(t.trip_date)} ${t.location} ${t.note||''}`).join('\n') || '',
+          mNextTrips.map(t => `${fmtDateKo(t.trip_date)} ${t.location} ${t.note||''}`).join('\n') || '',
+          ''
+        ]);
+        xlApplyRow(r, null, false);
+        r.height = Math.max(25, Math.max(mTrips.length, mNextTrips.length) * 20);
+      }
+    });
+
+    if (!trips.length && !nextTrips.length) {
+      const r = sheet.addRow(['', '(출장 없음)', '', '', '', '', '']);
+      xlApplyRow(r, null, false);
+    }
+
+    // ── 기타 / 휴가 ──
+    const etcRow = sheet.addRow(['휴가', '', '', '', '', '', '']);
+    xlApplyRow(etcRow, XL_SECTION_FILL, true);
+    etcRow.height = 22;
+
+    // 빈 행 (직접 입력용)
+    const vacRow = sheet.addRow(['', '', '', '',
+      '*) 연차휴가\n - \n\n*) 반차(오전)휴가\n - \n\n*) 반차(오후)휴가\n - ',
+      '*) 연차휴가\n - \n\n*) 반차(오전)휴가\n - \n\n*) 반차(오후)휴가\n - ',
+      '']);
+    xlApplyRow(vacRow, null, false);
+    vacRow.height = 100;
+
+    // 다운로드
+    const buf = await wb.xlsx.writeBuffer();
+    downloadBlob(buf, `주간업무보고_${sheetName}.xlsx`);
+  } catch(e) { alert('생성 실패: '+e.message); console.error(e); }
+  hideLoading();
+}
+
+// ══════════════════════════════
+// 월간보고 다운로드
+// ══════════════════════════════
+async function downloadMonthlyReport() {
+  showLoading('월간보고 생성 중...');
+  try {
+    const now = new Date();
+    const year = now.getFullYear(), mon = now.getMonth();
+    const mS = `${year}-${String(mon+1).padStart(2,'0')}-01`;
+    const lastDay = new Date(year, mon+1, 0).getDate();
+    const mE = `${year}-${String(mon+1).padStart(2,'0')}-${String(lastDay).padStart(2,'0')}`;
+
+    const [events, trips] = await Promise.all([getEvents(), getTrips(mS, mE)]);
+    const monthEvs = events.filter(ev => ev.start <= mE && (ev.end||ev.start) >= mS);
+
+    const wb = new ExcelJS.Workbook();
+    const sheetName = `${year}년 ${mon+1}월`;
+    const sheet = wb.addWorksheet(sheetName);
+    xlSetupSheet(sheet);
+
+    // 헤더
+    const hdr = sheet.addRow(['', '과제', '인력투입현황', '주요 업무', `실적 (${mon+1}월)`, '비고', `작성자: ${currentUser.name}`]);
+    xlApplyRow(hdr, XL_HEADER_FILL, true);
+    hdr.height = 24;
+
+    // 사이트별 그룹
+    const siteNames = LOCATIONS.map(l=>l.name);
+    const grouped = {};
+    monthEvs.forEach(ev => {
+      const s = (ev.site||'').trim()||'기타';
+      if (!grouped[s]) grouped[s] = [];
+      grouped[s].push(ev);
+    });
+
+    const orderedSites = Object.keys(grouped).sort((a,b) => {
+      const ai = siteNames.indexOf(a), bi = siteNames.indexOf(b);
+      return (ai===-1?99:ai) - (bi===-1?99:bi);
+    });
+
+    orderedSites.forEach(site => {
+      const evs = grouped[site];
+      const members = [...new Set(evs.flatMap(e=>(e.member||'').split(',').map(s=>s.trim())))].filter(Boolean).join(', ');
+      const secRow = sheet.addRow([site, '', members, '', '', '', '']);
+      xlApplyRow(secRow, XL_SECTION_FILL, true);
+      secRow.height = 22;
+
+      evs.sort((a,b) => a.start.localeCompare(b.start));
+      evs.forEach(ev => {
+        let dateStr = fmtDateKo(ev.start);
+        if (ev.end && ev.end !== ev.start) dateStr += ` ~ ${fmtDateKo(ev.end)}`;
+        const r = sheet.addRow(['', ev.title, ev.member||'', '', dateStr + '\n' + (ev.note||''), '', '']);
+        xlApplyRow(r, null, false);
+        r.height = 35;
+      });
+    });
+
+    if (!monthEvs.length) {
+      const r = sheet.addRow(['', '(이번 달 일정 없음)', '', '', '', '', '']);
+      xlApplyRow(r, null, false);
+    }
+
+    // 출장 현황
+    const tripSec = sheet.addRow(['출장 현황', '', '', '', '', '', '']);
+    xlApplyRow(tripSec, XL_SUBSECTION_FILL, true);
+    tripSec.height = 22;
+
+    if (trips.length) {
+      // 멤버별 출장 요약
+      MEMBERS.forEach(m => {
+        const mt = trips.filter(t=>t.member===m.name);
+        if (!mt.length) return;
+        const detail = mt.map(t => `${fmtDateKo(t.trip_date)} ${t.location} ${t.note||''}`).join('\n');
+        const r = sheet.addRow(['', m.name, `${mt.length}회`, '', detail, '', '']);
+        xlApplyRow(r, null, false);
+        r.height = Math.max(25, mt.length * 20);
+      });
+    } else {
+      const r = sheet.addRow(['', '(출장 없음)', '', '', '', '', '']);
+      xlApplyRow(r, null, false);
+    }
+
+    // 통계
+    const statSec = sheet.addRow(['통계', '', '', '', '', '', '']);
+    xlApplyRow(statSec, XL_SECTION_FILL, true);
+    statSec.height = 22;
+
+    const statRow = sheet.addRow(['', '', '', '',
+      `총 일정: ${monthEvs.length}건\n총 출장: ${trips.length}건\n\n팀원별 출장:\n` +
+      MEMBERS.map(m => `  ${m.name}: ${trips.filter(t=>t.member===m.name).length}회`).join('\n'),
+      '', '']);
+    xlApplyRow(statRow, null, false);
+    statRow.height = 120;
+
+    const buf = await wb.xlsx.writeBuffer();
+    downloadBlob(buf, `월간업무보고_${year}${String(mon+1).padStart(2,'0')}.xlsx`);
+  } catch(e) { alert('생성 실패: '+e.message); console.error(e); }
+  hideLoading();
 }
 
 // ===== NOTICES =====
