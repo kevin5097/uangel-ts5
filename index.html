@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>TS5 팀 일정 협업 대시보드</title>
+<title>팀 일정 협업 대시보드</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
 <style>
@@ -618,7 +618,7 @@ body.guest-mode .content { padding-top: 14px; }
 <div id="loginScreen">
   <div class="login-box">
     <div class="login-logo">🏢</div>
-    <h1>TS5 팀 협업 대시보드</h1>
+    <h1>팀 협업 대시보드</h1>
     <p>비밀번호를 입력해 주세요</p>
     <input class="login-input" type="password" id="pwInput" placeholder="••••••••••">
     <button class="login-btn" id="loginBtn" onclick="doLogin()">입장하기</button>
@@ -641,7 +641,7 @@ body.guest-mode .content { padding-top: 14px; }
 <!-- APP -->
 <div id="app" style="display:none;flex-direction:column;min-height:100vh">
   <div class="topbar">
-    <span class="topbar-logo">🏢 TS5 팀 대시보드</span>
+    <span class="topbar-logo">🏢 팀 대시보드</span>
     <div class="topbar-right">
       <div title="실시간 연결됨" class="realtime-dot"></div>
       <div class="current-user">
@@ -1218,13 +1218,18 @@ body.guest-mode .content { padding-top: 14px; }
 <script>
 // ===== SUPABASE =====
 const { createClient } = supabase;
+const _d = s => atob(s);
 const sb = createClient(
-  'https://lgrgsvoxdzzbbrxbnalx.supabase.co',
-  'sb_publishable_2-T72SgnioMi0y3UJ2gaEQ_urpoAq-Q'
+  _d('aHR0cHM6Ly9sZ3Jnc3ZveGR6emJicnhibmFseC5zdXBhYmFzZS5jbw=='),
+  _d('c2JfcHVibGlzaGFibGVfMi1UNzJTZ25pb01pMHkzVUoyZ2FFUV91cnBvQXEtUQ==')
 );
 
 // ===== CONFIG =====
-const PASSWORD = 'uangel.1004';
+const PW_HASH = '1e79e4f07e34a0c0203fa877624648dd18d27ccb470d41488715e060b6e35e49';
+async function sha256(text) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+  return [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2,'0')).join('');
+}
 const GUEST_MEMBER = { name:'Guest', role:'guest', color:'#94a3b8', emoji:'👁' };
 const LOCATIONS = [
   { name:'본사',         icon:'🏢', color:'#64748b', bg:'#f1f5f9' },
@@ -1367,9 +1372,10 @@ async function deleteTaskById(id) {
 // ===== LOGIN =====
 function isGuest() { return currentUser && currentUser.role === 'guest'; }
 
-function doLogin() {
+async function doLogin() {
   const pw = document.getElementById('pwInput').value;
-  if (pw === PASSWORD) {
+  const hash = await sha256(pw);
+  if (hash === PW_HASH) {
     document.getElementById('loginError').textContent = '';
     document.getElementById('loginScreen').style.display = 'none';
     showMemberSelect();
